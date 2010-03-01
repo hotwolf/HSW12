@@ -1,0 +1,424 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>HSW12</title>
+</head>
+<body background="background.gif " text="#5E34BA" link="#0000EE" vlink="#551A8B" alink="#FE0000">
+
+<center>
+<img align="middle" src="hsw12.gif" alt="hsw12asm">
+</center>
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#menu">Menu Bar</a></li>
+<li><a href="#terminal">Terminal Window</a></li>
+<li><a href="#source">Source Code Window</a></li>
+<li><a href="#variables">Variables Window</a></li>
+<li><a href="#registers">Registers Window</a></li>
+<li><a href="#control">Control Window</a></li>
+<li><a href="#macro_language">HSW12 Macro Language</a></li>
+</ul>
+
+<hr>
+<h2 align="left"><a name="introduction">Introduction</a></h2>
+
+The HSW12 IDE is a debugging tool for HC(S)12 assembler code.  
+It runs under LINUX (and probably other UNIXes as well) and provides an interface to the D-BUG12 POD. 
+This whole thing has been written in Perl/Tk so that it can easily be adjusted and enhanced.
+(Speed was a minor concern.)  
+It comes with its own <a href="http:hsw12asm.html">assembler</a> which has been written in Perl as well.
+This document gives a quick overview on how to use this software.
+<br>
+<br>
+Start the HSW12 IDE as follows:<br>
+<listing><b>
+    perl hsw12.pl [&lt;file name&gt;]
+</b></listing>
+The optional argument can be either an Assembler file (*.s) of an HSW12 session (*.hsw12).
+<br>
+<br>
+<img src="all.gif" align="middle" alt="Menu Bar">
+<br>
+<br>
+The HSW12 GUI is split up into several windows to give you the freedom to place its components
+anywhere on the sceen. When you launch "hsw12.pl" the six HSW12 windows will pop up on the screen:<br>
+<dl>
+<dt><img src="1.gif" align="middle" alt="1"><a href="#menu">Menu Bar</a></dt>
+<dt><img src="2.gif" align="middle" alt="2"><a href="#terminal">Terminal Window</a></dt>
+<dt><img src="3.gif" align="middle" alt="3"><a href="#source">Source Code Window</a></dt>
+<dt><img src="4.gif" align="middle" alt="4"><a href="#variables">Variables Window</a></dt>
+<dt><img src="5.gif" align="middle" alt="5"><a href="#registers">Registers Window</a></dt>
+<dt><img src="6.gif" align="middle" alt="6"><a href="#control">Control Window</a></dt>
+</dl>   
+
+<hr>
+<h2 align="left"><a name="menu">Menu Bar</a></h2>
+<img src="main.gif" align="middle" alt="Menu Bar">
+<br>
+<br>
+There are four menu buttons in the menu bar:<br>
+<dl>
+<dt><img src="1.gif" align="middle" alt="1"><a href="#menu_file">File Menu Button</a></dt>
+<dt><img src="2.gif" align="middle" alt="2"><a href="#menu_pref">Preferences Menu Button</a></dt>
+<dt><img src="3.gif" align="middle" alt="3"><a href="#menu_window">Window Menu Button</a></dt>
+<dt><img src="4.gif" align="middle" alt="4"><a href="#menu_help">Help Menu Button</a></dt>
+</dl>
+
+<h3 align="left"><a name="menu_file">File Menu Button</a></h3>
+<img src="file.gif" align="middle" alt="File Menu Button">
+<br>
+<br>
+The File Menu contains ten entries:<br>
+<dl>
+<dt><img src="1.gif"  align="middle" alt="1" >New Session</dt>
+<dd>Starts a new HSW12 session.</dd>
+<dt><img src="2.gif"  align="middle" alt="2" >Restore Session</dt>
+<dd>Restores a previous HSW12 Session.</dd>
+<dt><img src="3.gif"  align="middle" alt="3" >Save Session</dt>
+<dd>Saves the current HSW12 Session.</dd>
+<dt><img src="4.gif"  align="middle" alt="4" >Save Session as...</dt>
+<dd>Saves the current HSW12 Session in a new file.</dd>
+<dt><img src="5.gif"  align="middle" alt="5" >Load Source Code</dt>
+<dd>Loads an assembler source code file.</dd>
+<dt><img src="6.gif"  align="middle" alt="6" >Recompile Source Code</dt>
+<dd>Recompiles the current assembler file.</dd>
+<dt><img src="7.gif"  align="middle" alt="7" >Save List File</dt>
+<dd>Dumps an assembler listing.</dd>
+<dt><img src="8.gif"  align="middle" alt="8" >Save Linear S-Record</dt>
+<dd>Dumps a linear S-Record file.</dd>
+<dt><img src="9.gif"  align="middle" alt="9" >Save Paged S-Record</dt>
+<dd>Dumps a paged S-Record file.</dd>
+<dt><img src="10.gif" align="middle" alt="10">Quit</dt>
+<dd>Quits the HSW12 IDE.</dd>
+</dl>
+
+<h3 align="left"><a name="menu_pref">Preferences Menu Button</a></h3>
+<img src="pref.gif" align="middle" alt="I/O Menu Button">
+<br>
+<br>
+The Preferences menu allows you to select:<br>
+<dl>
+<dt><img src="1.gif"  align="middle" alt="1"><a href="#menu_pref_term">Terminal I/O Parameters</a></dt>
+<dt><img src="2.gif"  align="middle" alt="2"><a href="#menu_pref_srec">S-Record Format</a></dt>
+<dt><img src="3.gif"  align="middle" alt="3"><a href="#menu_pref_addr">Address Mode</a></dt>
+</dl>
+
+<h4 align="left"><a name="menu_pref_term">Terminal I/O Parameters</a></h4>
+<img src="pref_term.gif" align="middle" alt="Terminal I/O Parameters">
+<br>
+<br>
+The I/O parameters that need to be set are:<br>
+<dl>
+<dt><img src="1.gif"  align="middle" alt="1"><a href="#menu_pref_term_port">Serial Port</a></dt>
+<dt><img src="2.gif"  align="middle" alt="2"><a href="#menu_pref_term_speed">S-Record Format</a></dt>
+</dl>
+
+<h5 align="left"><a name="menu_pref_term_port">Serial Port</a></h5>
+<img src="pref_term_port.gif" align="middle" alt="I/O Port">
+<br>
+<br>
+<img src="1.gif"  align="middle" alt="1">This menu selects the port that your D-Bug12 POD is connected to.
+(Be careful! Don't select the port that your mouse is connected to.)
+
+<h5 align="left"><a name="menu_pref_term_speed">Baud Rate</a></h5>
+<img src="pref_term_speed.gif" align="middle" alt="Baud Rate">
+<br>
+<br>
+<img src="1.gif"  align="middle" alt="1">This menu gives you a few choices to select the baud rate. 
+
+<h4 align="left"><a name="menu_pref_srec">S-Record Format</a></h4>
+<img src="pref_srec.gif" align="middle" alt="S-Record Format">
+<br>
+<br>
+There are four setup options to select the S-Record format:<br>
+<dl>
+<dt><img src="1.gif"  align="middle" alt="1"><a href="#menu_pref_srec_format">S-Record Address Format</a></dt>
+<dt><img src="2.gif"  align="middle" alt="2"><a href="#menu_pref_srec_length">S-Record Data Length</a></dt>
+<dt><img src="3.gif"  align="middle" alt="3"><a href="#menu_pref_srec_s5">S5-Record Insertion</a></dt>
+<dt><img src="4.gif"  align="middle" alt="4"><a href="#menu_pref_srec_fill">S-Record Fill Bytes</a></dt>
+</dl>
+
+<h5 align="left"><a name="menu_pref_srec_format">S-Record Address Format</a></h5>
+<img src="pref_srec_format.gif" align="middle" alt="S-Record Address Format">
+<br>
+<br>
+<img src="1.gif"  align="middle" alt="1">The D-Bug12 POD supports two address formats:
+<ul>
+<li><b>S19</b>: 16-Bit addresses</li>
+<li><b>S28</b>: 24-Bit addresses</li>
+</ul>
+
+<h5 align="left"><a name="menu_pref_srec_length">S-Record Data Length</a></h5>
+<img src="pref_srec_length.gif" align="middle" alt="S-Record Data Length">
+<br>
+<br>
+The number of data bytes per S-record can be selected in <img src="1.gif"  align="middle" alt="1">this menu.
+
+<h5 align="left"><a name="menu_pref_srec_s5">S5-Record Insertion</a></h5>
+<img src="pref_srec_s5.gif" align="middle" alt="S5-Record Insertion">
+<br>
+<br>
+S5-Records contain the number of S-Records that have already been transmitted. 
+<img src="1.gif"  align="middle" alt="1">This menu determines how frequently S5-Records should be sent.
+<img src="2.gif"  align="middle" alt="2">"None" disables the insertion of S5-Records.
+
+<h5 align="left"><a name="menu_pref_srec_fill">S-Record Fill Bytes</a></h5>
+<img src="pref_srec_fill.gif" align="middle" alt="S-Record Fill Bytes">
+<br>
+<br>
+Most target devices only allow full words to be programmed into their flashes. 
+<img src="1.gif"  align="middle" alt="1"> The "Fill Bytes" ensures that all S-Records contain an even number 
+of bytes by inserting <b>$FF</b> wherever necessary.
+
+<h4 align="left"><a name="menu_pref_addr">Address Mode</a></h4>
+<img src="pref_addr.gif" align="middle" alt="Address Mode">
+<br>
+<br>
+If <img src="1.gif"  align="middle" alt="1">this is disabled HSW12 will truncate all addresses down to 16-Bit.
+If it is enabled addresses in the range from <b>$8000</b> to <b>$C000</b> are 24-Bit wide.
+
+<h3 align="left"><a name="menu_window">Window Menu Button</a></h3>
+<img src="window.gif" align="middle" alt="Window Menu Button">
+<br>
+<br>
+The Window Menu lets you reopen or raise a particular <img src="1.gif"  align="middle" alt="1">HSW12 window. 
+The <img src="2.gif"  align="middle" alt="2">"All Windows" function reopens or raises all of the HSW12 windows.
+If the <img src="3.gif"  align="middle" alt="3">"connect" checkbutton is set, then all the HSW12 windows are connected. 
+Moving one window will make all of them move.
+   
+
+<h3 align="left"><a name="menu_help"> Help Menu Button</a></h3>
+<img src="help.gif" align="middle" alt="Help Menu Button">
+<br>
+<br>
+At the moment the Help Menu only consists of an <img src="1.gif" align="middle" alt="1">"About" screen 
+which contains the version numbers of the current HSW12 release.
+
+<hr>
+<h2 align="left"><a name="terminal">Terminal Window</a></h2>
+<img src="terminal.gif" align="middle" alt="Terminal Window">
+<br>
+<br>
+The Terminal Window consists of:<br>
+<dl>
+<dt><img src="1.gif" align="middle" alt="1"><a href="#terminal_display">Terminal Display</a></dt>
+<dt><img src="2.gif" align="middle" alt="2"><a href="#terminal_entry">Command Entry</a></dt>
+<dt><img src="2.gif" align="middle" alt="3"><a href="#terminal_upload">Upload Button</a></dt>
+<dt><img src="3.gif" align="middle" alt="4"><a href="#terminal_clear">Clear Button</a></dt>
+<dt><img src="4.gif" align="middle" alt="5"><a href="#terminal_macros">Macro Buttons</a></dt>
+</dl>
+
+<h3 align="left"><a name="terminal_display">Terminal Display</a></h3>
+The Terminal Display logs all data that is received from the D-Bug12 POD.
+If the display widget is in focus, all keyboard entries will be directly transmitted to the POD. 
+
+<h3 align="left"><a name="terminal_entry">Command Entry</a></h3>
+The Command Entry allows quick transmissions of recurring commands.
+
+<h3 align="left"><a name="terminal_upload">Upload Button</a></h3>
+The Upload Button sends the linear S-Record to the B-Bug12 POD.
+
+<h3 align="left"><a name="terminal_clear">Clear Button</a></h3>
+The Clear Button resets the Terminal Display.
+
+<h3 align="left"><a name="terminal_macros">Macro Buttons</a></h3>
+Each of the Macro Buttons can store a sequence D-Bug12 command. A left-click on the button will execute the macro.
+A right-click will open a Macro Editor.
+<br>
+<br>
+<img src="edit_macro.gif" align="middle" alt="Macro Editor">
+<br>
+<br>
+The two entry fields in the Macro Editor let you modify <img src="1.gif" align="middle" alt="1">the macro name 
+and <img src="2.gif" align="middle" alt="2">the macro sequence. 
+Please find a description of the HSW12 Macro Language <a href="#macro_language">below</a>
+
+<hr>
+<h2 align="left"><a name="source">Source Code Window</a></h2>
+<img src="source.gif" align="middle" alt="Source Code Window">
+<br>
+<br>
+The Source Code Window has four elements:<br>
+<dl>
+<dt><img src="1.gif" align="middle" alt="1"><a href="#source_display">Source Code Display</a></dt>
+<dt><img src="2.gif" align="middle" alt="2"><a href="#source_follow_pc">Follow PC Switch</a></dt>
+<dt><img src="3.gif" align="middle" alt="3"><a href="#source_address_search">Address Search</a></dt>
+<dt><img src="4.gif" align="middle" alt="4"><a href="#source_address_search">Text Search</a></dt>
+</dl>
+
+<h3 align="left"><a name="source_display">Source Code Display</a></h3>
+The Source Code Display shows the assembler listing with syntax highlighting. Double-clicking on any line of code 
+will open up a text editor. The prefered editor can be selected through the following environment variables:<br>
+<dl>
+<dt><b>$HSW12_EDITOR</b></dt>
+<dd>
+The <b>$HSW12_EDITOR</b> variable should contain a string to launch your favorite editor. It should contain the 
+two symbols "%f" and "%l" which will be substituted by the file name and the line number, i.e.: "emacs +%l %f"
+</dd>
+<dt><b>$WINEDITOR</b></dt>
+<dd>
+If $HSW12_EDITOR isn't set HSW12 will look for the variable <b>$WINEDITOR</b>. This variable should only contain 
+the plain editor call. The string <b>"+%l %f"</b> will be appended to the variable's contents automatically.  
+</dd>
+<dt><b>$EDITOR</b></dt>
+<dd>
+If none of the above variables are set HSW12 will try to read the <b>$EDITOR</b> variable. This variable works 
+just like $WINEDITOR exept that the editor will be executed in a new "xterm" window. Other terminal windows can be selected 
+through the variable <b>$HSW12_TERMINAL</b>.
+</dd>
+</dl>
+If no editor is selected, then "emacs" will be launched as default.
+<br>
+
+<h3 align="left"><a name="source_follow_pc">Follow PC Switch</a></h3>
+If the Follow PC Switch is enabled, the Source Code Display will show the current address every time the 
+PC or PPAGE registers change.
+The current PC is determined by: PPAGE:PC. 
+
+<h3 align="left"><a name="source_address_search">Address Search</a></h3>
+The Address Search field allows you to display a certain address in the Source Code Display. 
+The entry expects an <a href="hsw12asm.html#expressions">HSW12 assembler expression</a>.
+
+<h3 align="left"><a name="source_text_search">Text Search</a></h3>
+The Text Search field lets you parse the source code for text strings. 
+The entry expects a regular expression.
+
+<hr>
+<h2 align="left"><a name="variables">The Variables Window</a></h2>
+<img src="variables.gif" align="middle" alt="Variables Window">
+<br>
+<br>
+The Variables Window contains:<br>
+<dl>
+<dt><img src="1.gif" align="middle" alt="1"><a href="#variables_display">Variables Display</a></dt>
+<dt><img src="2.gif" align="middle" alt="2"><a href="#variables_entry">Variables Entry</a></dt>
+<dt><img src="3.gif" align="middle" alt="3"><a href="#variables_edit">Edit Button</a></dt>
+</dl>
+
+<h3 align="left"><a name="variables_display">Variables Display</a></h3>
+The Variables Display shows a selection of monitored memory locations in the MCU. 
+The selection is done through an <a href="#macro_language">HSW12 macro</a>.
+
+<h3 align="left"><a name="variables_entry">Variables Entry</a></h3>
+The Variables Entry lets you modify memory locations in the MCU. There are three entry fields for:<br>
+<ul>
+<li>the start address of the memory range</li>
+<li>the data</li>
+<li>the number of bytes to modify</li>
+</ul><br>
+Each entry expects an <a href="hsw12asm.html#expressions">HSW12 assembler expression</a>.
+
+<h3 align="left"><a name="variables_edit"></a>Edit Button</h3>
+<img src="edit_variables.gif" align="middle" alt="Macro Editor">
+<br>
+<br>
+The Edit Button opens an Editor for <img src="1.gif" align="middle" alt="1">HSW12 Macros 
+to modify the display format.
+
+<hr>
+<h2 align="left"><a name="registers">Registers Window</a></h2>
+<img src="registers.gif" align="middle" alt="Registers Window">
+<br>
+<br>
+The Register Window lets you view and alter the MCU's register contents. Its window elements are:<br>
+<dl>
+<dt><img src="1.gif" align="middle" alt="1"><a href="#registers_current">Current Register Values</a></dt>
+<dt><img src="2.gif" align="middle" alt="2"><a href="#registers_entry">Registers Entry</a></dt>
+<dt><img src="3.gif" align="middle" alt="3"><a href="#registers_ppage">PPAGE Address</a></dt>
+</dl>
+
+<h3 align="left"><a name="registers_current">Current Register Values</a></h3>
+The Current Register Values are the monitored contents of the MCU's registers.
+
+<h3 align="left"><a name="registers_entry">Registers Entry</a></h3>
+The Registers Entries allow you to modify the register contents.
+
+<h3 align="left"><a name="registers_ppage">PPAGE Address</a></h3>
+The PPAGE Address field tells the HSW12 IDE at which memory location to find the PPAGE register.
+
+<hr>
+<h2 align="left"><a name="control">The Control Window</a></h2>
+<img src="control.gif" align="middle" alt="Control Window">
+<br>
+<br>
+The Control Window has three elements:<br>
+<dl>
+<dt><img src="1.gif" align="middle" alt="1"><a href="#control_breakpoints">Breakpoint Entry</a></dt>
+<dt><img src="2.gif" align="middle" alt="2"><a href="#control_program_execution">Program Execution Control</a></dt>
+<dt><img src="3.gif" align="middle" alt="3"><a href="#control_update">Update Button</a></dt>
+</dl>
+
+<h3 align="left"><a name="control_breakpoints">Breakpoint Entry</a></h3>
+The Breakpoint Entry allows you to set breakpoints to interrupt the program execution.
+
+<h3 align="left"><a name="control_program_execution">Program Execution Control</a></h3>
+The Program Execution Control buttons invoke several D-Bug12 commands to control the MCU's program execution.
+
+<h3 align="left"><a name="control_update">Update Button</a></h3>
+This button updates all displayed variables and registers.
+
+<hr>
+<h2 align="left"><a name="macro_language">HSW12 Macro Language</a></h2>
+The HSW12 Macro Language is very simple. It only consists of two elements:<br>
+<ul>
+<li>Regular Output Text</li>
+<li>Macro Commands</li>
+</ul>
+
+<h3 align="left"><a name="macro_language_text">Regular Output Text</a></h3>
+Regular Output Text is any text that is not a Macro Command. This text will be outputted unaltered.
+
+<h3 align="left"><a name="macro_language_text">Macro Commands</a></h3>
+Macro Commands are surrounded by brackets [...]. The HSW12 IDE knows five different macro commands.
+Some of them are not available for Variables Display macros:<br>
+<dl>
+<dt><b>[update]</b></dt>
+<dd>
+Updates all variable and register displays.(Not available for Variables Display macros)
+</dd>
+<dt><b>[upload linear]</b> ([upload])</dt>
+<dd>
+Uploads the linear S-Record to the D-Bug12 POD.(Not available for Variables Display macros)
+</dd>
+<dt><b>[upload paged]</b></dt>
+<dd>
+Uploads the paged S-Record to the D-Bug12 POD.(Not available for Variables Display macros)
+</dd>
+<dt><b>[recompile]</b></dt>
+<dd>
+Recompiles the current assembler file.(Not available for Variables Display macros)
+</dd>
+<dt><b>[evaluate &lt;expression&gt; &lt;format&gt;]</b></dt>
+<dd>
+Evaluates an <a href="hsw12asm.html#expressions">HSW12 assembler expression</a> (first argument) 
+and outputs the result. The second argument determines the output format of the integer result.
+Valid output formats are:<br>
+<dl>
+<dt><b><i>n</i>b</b>: <i>n</i> byte integer in binary format</dt>
+<dt><b><i>n</i>d</b>: <i>n</i> byte integer in decimal format</dt>
+<dt><b><i>n</i>h</b>: <i>n</i> byte integer in hexadecimal format</dt>
+<dt><b><i>n</i>a</b>: <i>n</i> character ASCII string</dt>
+</dl>
+</dd>
+<dt><b>[lookup &lt;expression&gt; &lt;format&gt;]</b></dt>
+<dd>
+Evaluates an <a href="hsw12asm.html#expressions">HSW12 assembler expression</a> (first argument)
+and reads the content of this memory address from the MCU. The output is formated as above.
+If this Macro Command is executed from a Terminal macro, no data will be read from the MCU; 
+only cached data will be used. 
+</dd>
+</dl>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+

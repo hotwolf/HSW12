@@ -1,0 +1,482 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>HSW12ASM</title>
+</head>
+<body background="background.gif " text="#5E34BA" link="#0000EE" vlink="#551A8B" alink="#FE0000">
+
+<center>
+<img align="middle" src="hsw12asm.gif" alt="hsw12asm">
+</center>
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#comments">Comments</a></li>
+<li><a href="#expressions">Expressions</a></li>
+<li><a href="#labels">Labels</a></li>
+<li><a href="#precompiler">Precompiler Directives</a></li>
+<li><a href="#pseudo-opcodes">Pseudo-Opcodes</a></li>
+<li><a href="#opcodes">HCS12 Opcodes</a></li>
+<li><a href="#output">Output Files</a></li>
+</ul>
+
+<hr>
+<h2 align="left"><a name="introduction">Introduction</a></h2>
+The HSW12ASM is a simple multi-pass assembler which has been written in Perl code. 
+Some features of this assembler are:
+<ul>
+<li>It handles 16MB of address space</li>
+<li>It generates linear and paged S-Record files</li>
+<li>It uses two program counters (linear and paged) to contol the S-Record output</li>
+<li>It exports source code symbols into the <a href="hsw12.html"><b>HSW12 IDE</b></a></li>
+</ul>
+This assembler is normally invoked from the <a href="hsw12.html"><b>HSW12 IDE</b></a>, however 
+it can be used stand alone with the command line interface <b>hsw12asm.pl</b>.
+<b>hsw12asm.pl</b> is invoked as follows:<br>
+<listing><b>
+    perl hsw12asm.pl &lt;src files&gt; [-L &lt;library paths&gt;] [-D &lt;defines: name=value or name&gt;] [-S19|-S28]
+         &lt;src files&gt;       source code files(*.s)
+         &lt;library paths&gt;   directories to search for include files
+         &lt;defines&gt;         assembler defines
+         S19,S28           S-Record format
+</b></listing>
+The following sections give some insight to the assembler's source code format and it's outputs.
+
+<hr>
+<h2 align="left"><a name="comments">Comments</a></h2>
+All code following ";" to the end of the line is interpreted as a comment by the HSW12 assembler. Comments may also begin
+with an "*" if it is the first non-whitespace character in the line. 
+
+<hr>
+<h2 align="left"><a name="expressions">Expressions</a></h2>
+Expressions consist of symbols, constants and operators. They are used as operands for the HC(S) opcodes 
+and and the assembler pseudo opcodes. 
+
+<h3 align="left"><a name="symbols">Symbols</a></h3>
+Symbols represent integer values. 
+
+<h4 align="left"><a name="user_defined_symbols">User Defined Symbols</a></h4>
+Symbols can be defined through various <a href="#pseudo-opcodes">pseudo-opcodes</a> or through the use of labels. 
+A symbol name must comply to these rules: 
+<ul>
+<li>The symbol name must consist of alpha-numeric characters, and underscores (^[A-Z0-9_]+$)</li>
+<li>The symbol name must begin with a letter (^[A-Z])</li>
+<li>The symbol name may not contain any whitespaces</li>
+<li>The symbol name may not be any of the keywords: A, B, D, X, Y, SP, CCR, PC, TMP2, TMP3, UNMAPPED</li>
+</ul>
+
+<h4 align="left"><a name="predefined_symbols">Predefined Symbols</a></h4>
+The HSW12 assembler knows a set of predefined symbols:<br>
+<listing>
+    @  Represents the current value of the linear program counter
+    *  Represents the current value of the paged program counter
+</listing>
+
+<h4 align="left"><a name="symbols_extensions">Automatic Symbol Extensions</a></h4>
+The HSW12 assembler supports the automatic generation of symbol name extensions. If a symbol name ends with a "'", 
+this character will be substituted by the contents of the <b>LOC</b> counter variable. This counter may be incremented 
+by the <a href="#loc"><b>LOC</b></a> pseudo-opcode.
+
+<h3 align="left"><a name="constants">Constants</a></h3>
+Integer Constants are of the following format:<br>
+<listing>
+    %...   binary constant      (^%[01]+$)
+     ...   decimal constant     (^[0-9]+$)
+    $...   hexadecimal constant (^\$[0-9A-H]+$)
+    "..."  ascii strings        (^["'].+["']$)
+</listing>
+
+<h3 align="left"><a name="operators">Operators</a></h3>
+The HSW12 assembler supports the operaters that are listed below (from highest to lowest precedence). 
+Expressions may be nested in parenthesis.
+<listing>
+    &  bitwise AND
+    |  bitwise OR
+    ^  bitwise XOR
+   &gt;&gt;  leftshift
+   &lt;&lt;  rightshift
+    *  multiplication
+    /  integer division
+    %  modulus
+    +  addition
+    -  subtraction
+</listing>
+
+<hr>
+<h2 align="left"><a name="labels">Labels</a></h2>
+Labels assign the current value of the paged program counter to a symbol.
+The syntax is:<br>
+<listing>
+SYMBOL
+</listing>
+or<br>
+<listing>
+SYMBOL:
+</listing>
+(The symbol name must be the first characters in the line.)<br>
+To assign the current value of the linear program counter to a symbol, use the following syntax:<br>
+<listing>
+SYMBOL  EQU  @
+</listing>
+
+<hr>
+<h2 align="left"><a name="precompiler">Precompiler Directives</a></h2>
+The HSW12 assembler knows the following precompiler directives:
+<ul>
+<li><a href="#define">#DEFINE</a></li>
+<li><a href="#undef">#UNDEF</a></li>
+<li><a href="#ifdef">#IFDEF</a></li>
+<li><a href="#ifndef">#IFNDEF</a></li>
+<li><a href="#else">#ELSE</a></li>
+<li><a href="#endif">#ENDIF</a></li>
+<li><a href="#include">#INCLUDE</a></li>
+<li><a href="#macro">#MACRO</a></li>
+<li><a href="#emac">#EMAC</a></li>
+</ul>
+All precompiler directives  must comply to the following syntax rules:
+<listing>
+line starts with
+a hash, directly
+followed by the
+directive
+|
+V
+<b>#&lt;directive&gt; &lt;arg&gt; &lt;arg&gt; ...</b> 
+            ^     ^     ^
+            |     |     |
+            spaces,  tabs
+</listing>
+<h3 align="left"><a name="define">#DEFINE</a></h3>
+Sets an assembler define for conditional code compilation. All assembler defines will be exported 
+into compiler symbols at the end of the precompile step.<br>
+<b>"#DEFINE"</b> requires two arguments:
+<ol>
+<li>a define name</li>
+<li>a value the define is set to (optional)</li>
+</ol>
+
+To make the HSW12 assembler behave a little more like the
+<a href="http://www.freescale.com">AS12</a>, 
+all lables and pseudo-opcode symbol assignments will be considered as precompiler defines as well.
+
+<h3 align="left"><a name="undef">#UNDEF</a></h3>
+Undefines an assembler define.
+<br>
+<b>"#UNDEF"</b> requrires one argument:
+<ol>
+<li>a define name</li>
+</ol>
+
+<h3 align="left"><a name="ifdef">#IFDEF</a></h3>
+Starts a section of conditional code. This code will only be compiled if the define is set.
+
+<h3 align="left"><a name="ifndef">#IFNDEF</a></h3>
+Starts a section of conditional code. This code will only be compiled if the define is not set.
+
+<h3 align="left"><a name="else">#ELSE</a></h3>
+Ends a section of conditional code that has been initiated with <b>"#IFDEF"</b> or <b>"#IFNDEF"</b> 
+and starts a new one that requires the opposite condition.  
+
+<h3 align="left"><a name="endif">#ENDIF</a></h3>
+End a section of conditional code.
+
+<h3 align="left"><a name="include">#INCLUDE</a></h3>
+Includes a source code file at the current position. 
+
+<h3 align="left"><a name="macro">#MACRO</a></h3>
+Starts a macro definition. This directive requires two arguments:
+<ol>
+<li>The macro name</li>
+<li>The number of arguments which are to be passed to the macro</li>
+</ol>
+A macro definition ends with an <a href="#emac">#EMAC</a> directive.
+Inside the macro, the strings "\1", "\2", ... will be replaced by the macro arguments.
+All lables will be defined in a local name space.
+Nested macro calls are possible.<br>
+<br>
+Example:<br>
+<listing>
+#MACRO MAC0 2       
+       MAC1  \1
+LOOP   CPD   0,\2
+       BEQ   LOOP
+#EMAC
+
+#MACRO MAC1 1       
+LOOP   CPD   0,\1       
+       BNE   LOOP
+#EMAC       
+
+       CPU   S12	
+       ORG   $0000
+       MAC0  X, Y
+</listing>
+
+Result:
+<listing>
+??????        S12 CODE:                      CPU   S12
+000000 0F4000                                ORG   $0000
+000000 0F4000 MACRO                          MAC0  X, Y
+000000 0F4000 MACRO                          MAC1  \1                                                                  (MAC0)
+000000 0F4000 AC 00                   LOOP   CPD   0,\1                                                                (MAC0/MAC1)
+000002 0F4002 26 FC                          BNE   LOOP                                                                (MAC0/MAC1)
+000004 0F4004 AC 40                   LOOP   CPD   0,\2                                                                (MAC0)
+000006 0F4006 27 FC                          BEQ   LOOP                                                                (MAC0)
+</listing>
+
+<h3 align="left"><a name="emac">#EMAC</a></h3>
+Ends a macro definition.
+
+<hr>
+<h2 align="left"><a name="pseudo-opcodes">Pseudo-Opcodes</a></h2>
+The following pseudo-opcodes are supported by the HSW12 assembler:<br>
+<ul>
+<li><a href="#align">ALIGN</a></li>
+<li><a href="#cpu">CPU</a></li>
+<li><a href="#dc.b">DC.B (DB, FCB)</a></li>
+<li><a href="#dc.w">DC.W (DW, FDW)</a></li>
+<li><a href="#ds.b">DS.B (DS, RMB)</a></li>
+<li><a href="#ds.w">DS.W (RMW)</a></li>
+<li><a href="#equ">EQU</a></li>
+<li><a href="#fcc">FCC</a></li>
+<li><a href="#fcs">FCS</a></li>
+<li><a href="#fill">FILL</a></li>
+<li><a href="#loc">LOC</a></li>
+<li><a href="#org">ORG</a></li>
+<li><a href="#unalign">UNALIGN</a></li>
+<li><a href="#setdp">SETDP</a></li>
+</ul><br>
+All pseudo-opcodes must comply to the following syntax rules:<br>
+<listing>
+symbol name
+must start at            arguments must
+the begin of             be separated
+the line                 by a comma
+|                            |
+V                            V
+<b>&lt;symbol&gt; &lt;psudo-opcode&gt; &lt;arg&gt;, &lt;arg&gt;, ...</b> 
+        ^              ^
+        |              |
+        +-spaces, tabs-+
+</listing>
+ 
+<h3 align="left"><a name="align">ALIGN</a></h3>
+Increments both program counters until PC & mask == 0.  If a second argument is given, then all memory 
+locations in between are filled with the lower eight bit of this integer.<br>
+Syntax:<br>
+<listing>
+        ALIGN &lt;mask&gt;
+</listing>
+or<br>
+<listing>
+        ALIGN &lt;mask&gt; &lt;pattern&gt;
+</listing>
+<br>
+
+<h3 align="left"><a name="cpu">CPU</a></h3>
+Switches to a different opcode table. Supportd CPUs are:<br>
+<ul>
+<li>HC11 (untested)</li>
+<li>HC12</li>
+<li>S12</li>
+<li>S12X</li>
+<li>XGATE</li>
+</ul>
+Syntax:<br>
+<listing>
+        CPU &lt;processor&gt;
+</listing>
+
+<h3 align="left"><a name="dc.b">DC.B (DB, FCB)</a></h3>
+Writes a number of constant bytes into the memory.<br>
+Syntax:<br>
+<listing>
+        DC.B &lt;byte&gt;, &lt;byte&gt;, ...
+</listing>
+<br>
+
+<h3 align="left"><a name="dc.w">DC.W (DW, FDW)</a></h3>
+Writes a number of constant words into the memory.<br>
+Syntax:<br>
+<listing>
+        DC.W &lt;word&gt;, &lt;word&gt;, ...
+</listing>
+
+<h3 align="left"><a name="ds.b">DS.B (DS, RMB)</a></h3>
+Advances both program counters by a number of bytes.<br>
+Syntax:<br>
+<listing>
+        DS.B &lt;#bytes&gt;
+</listing>
+<br>
+
+<h3 align="left"><a name="ds.w">DS.W (RMW)</a></h3>
+Advances both program counters by a number of words.<br>
+Syntax:<br>
+<listing>
+        DS.W &lt;#words&gt;
+</listing>
+<br>
+
+<h3 align="left"><a name="equ">EQU</a></h3>
+Directly assigns a value to a symbol.<br>
+Syntax:<br>
+<listing>
+&lt;symbol&gt; EQU &lt;expression&gt;
+</listing>
+<br>
+
+<h3 align="left"><a name="fcc">FCC</a></h3>
+Writes an ASCII string into the memory. The string must be surrounded by a delimeter
+which can be any character.<br>
+Syntax:<br>
+<listing>
+        FCC &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
+</listing>
+
+<h3 align="left"><a name="fcc">FCS</a></h3>
+Writes an ASCII string into the memory, which is termitated by a set MSB in the last character.
+The string must be surrounded by a delimeterwhich can be any character.<br>
+Syntax:<br>
+<listing>
+        FCS &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
+</listing>
+
+<h3 align="left"><a name="fill">FILL</a></h3>
+Fills a number of memory bytes with an 8-bit pattern.<br>
+Syntax:<br>
+<listing>
+        FILL &lt;pattern&gt;, &lt;#bytes&gt;
+</listing>
+<br>
+
+<h3 align="left"><a name="loc">LOC</a></h3>
+Increments the <b>"LOC"</b> counter that is used for automatic symbol name extensions.<br>
+Syntax:<br>
+<listing>
+        LOC
+</listing>
+<br>
+
+<h3 align="left"><a name="org">ORG</a></h3>
+This pseudo-opcode can be used to set the program counters to a certain value.
+If "ORG" is called with two arguments, then the paged program counter will be set to the value of the first 
+argument. The linear program counter will be set to the value of the second argument.
+If only one argument is passed to the pseudo-opcode, then this one will be the new value of the paged program
+counter. The value of the linear program counter is determined by the following table.<br>
+<table border="1" align="center">
+<br>
+<thead><tr>
+<th align="left" valign="middle">Paged Program Counter</th>
+<th align="left" valign="middle">Linear Program Counter</th>
+</tr></thead>
+<tr>
+<th align="left" valign="middle">xx0000 to<br>xx3FFF</th>
+<th align="left" valign="middle">F4000 to<br>F7FFF</th>
+</tr>
+<tr>
+<th align="left" valign="middle">xx4000 to<br>xx7FFF</th>
+<th align="left" valign="middle">F8000 to<br>FBFFF</th>
+</tr>
+<tr align="left" valign="middle">
+<th align="left" valign="middle">xx8000 to<br>xxBFFF</th>
+<th>(xx*4000) to<br>(xx*4000+3FFF)</th>
+</tr>
+<tr>
+<th align="left" valign="middle">xxC000 to<br>xxFFFF</th>
+<th align="left" valign="middle">FC000 to<br>FFFFF</th>
+</tr>
+</table><br>
+Syntax:<br>
+<listing>
+       ORG &lt;paged PC&gt;
+</listing>
+or<br>
+<listing>
+       ORG &lt;paged PC&gt;, &lt;linear PC&gt; 
+</listing>
+<br>
+
+<h3 align="left"><a name="unalign">UNALIGN</a></h3>
+Same as <a href="#align">ALIGN</a>, except that the program counters are incremented until PC & mask == mask.<br>
+Syntax:<br>
+<listing>
+        UNALIGN &lt;mask&gt;
+</listing>
+or<br>
+<listing>
+        UNALIGN &lt;mask&gt;, &lt;pattern&gt;
+</listing>
+<br>
+
+<h3 align="left"><a name="setdp">SETDP</a></h3>
+Selects the 256 byte address range in which direct address mode can be applied for S12X MCUs.<br>
+Syntax:<br>
+<listing>
+        SETDP &lt;direct page&gt;
+</listing>
+
+<hr>
+<h2 align="left"><a name="opcodes">HCS12 Opcodes</a></h2>
+For a description of the HC(S)12 instruction set, please refer to the 
+<a href="http://e-www.motorola.com/brdata/PDFDB/docs/S12CPU15UG.pdf">HCS12 Core Guide</a>.<br>
+All opcodes must comply to the following syntax rules:
+<listing>
+label name
+must start at         operands must
+the beginning         be separated
+of the line           by a comma
+|                         |
+V                         V
+<b>&lt;label&gt; &lt;opcode&gt; &lt;operand&gt;, &lt;operand&gt;, ...</b> 
+       ^        ^
+       |        |
+      spaces, tabs
+</listing>
+<br>
+
+<hr>
+<h2 align="left"><a name="output">Output Files</a></h2>
+The HSW12 assembler can generate tree output files:
+<dl>
+<dt><b>A Code Listing</b></dt>
+<dd>
+The Code Listing shows the assembler source together with the associated hex code. The entries are sorted by their paged address. 
+<br>
+<br>
+</dd>
+<dt><b>A Paged S-Record File</b></dt>
+<dd>
+The hex code of the paged address domain (paged program counter) in Motorolas S-Record format.<br>
+Paged addresses consist of an 8-bit page value (PPAGE register, MSB) and a 16-bit address value (PC register, LSB) =>PPAGE:ADDR.
+<br>
+<br>
+</dd>
+<dt><b>A Linear S-Record File</b></dt>
+<dd>
+The hex code of the linear address domain (linear program counter) in Motorolas S-Record format.<br>
+Linear addresses are equivalent to the physical address space of the NVMs inside the HC(S)12 MCUs.
+<br>
+<br>
+</dd>
+<dd></dd>
+</dl>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
