@@ -24,7 +24,7 @@ Desktop DB
 #Ignore temporary build files
 *.o
 *.a
-*.app
+#*.app
 *.swp
 *~.nib
 *.pbxuser
