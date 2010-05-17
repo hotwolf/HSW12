@@ -257,6 +257,10 @@ Dirk Heisswolf
 
  -modified stty call for Mac OS X (10.5)
 
+=item V00.14 - May 17, 2010 
+
+ -use different stty args depending on OS
+
 =over 4
 
 initial release
@@ -296,7 +300,7 @@ use IO::Select;
 ###########
 # version #
 ###########
-*version = \"00.13";#"
+*version = \"00.14";#"
 
 ######################
 # parser expressions #
@@ -472,8 +476,11 @@ sub set_baud_rate {
   if (defined $device) {
     undef $!;
     #set stty args
-    #$stty_call  = sprintf("stty -F %s ", $device);
-    $stty_call  = sprintf("stty -f %s ", $device);
+    if ($^O =~ /darwin/) {
+      $stty_call  = sprintf("stty -f %s ", $device);
+    } else {
+      $stty_call  = sprintf("stty -F %s ", $device);      
+    }
     $stty_call .= "-parenb ";
     $stty_call .= "-parodd ";
     $stty_call .= "cs8 ";
