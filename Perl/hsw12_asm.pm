@@ -310,6 +310,9 @@ Dirk Heisswolf
 =item V00.38 - May 7, 2009
  -macros now accept strings with commas and whitespaces
   
+=item V00.39 - May 27, 2010
+ -"./" is no longer treated as absolute path
+  
 =cut
 
 #################
@@ -352,7 +355,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.38";#"
+*version = \"00.39";#"
 
 #############################
 # default S-record settings #
@@ -366,7 +369,8 @@ use File::Basename;
 # path delimeters #
 ###################
 *path_del         = \qr/[\/\\]/;
-*path_absolute    = \qr/^\.?[\/\\]/;
+#*path_absolute    = \qr/^\.?[\/\\]/;
+*path_absolute    = \qr/^\[\/\\]/;
 
 ########################
 # code entry structure #
