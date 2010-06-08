@@ -63,6 +63,10 @@ Dirk Heisswolf
 
  -made script more platipus friendly
 
+=item V00.04 -Jun 8, 2010
+
+ -truncate all output files
+
 =cut
 
 #################
@@ -167,7 +171,7 @@ $code = hsw12_asm->new(\@src_files, \@lib_files, \%defines, "S12", 1);
 # write list file #
 ###################
 $list_file_name = sprintf("%s/%s.lst", $output_path, $prog_name);
-if (open (FILEHANDLE, sprintf(">%s", $list_file_name))) {
+if (open (FILEHANDLE, sprintf("+>%s", $list_file_name))) {
     $out_string = $code->print_listing();
     print FILEHANDLE $out_string;
     #print STDOUT     $out_string;
@@ -188,8 +192,8 @@ if ($code->{problems}) {
     #########################
     # write linear S-record #
     #########################
-    $lin_srec_file_name = sprintf(">%s_lin.%s", $prog_name, lc($srec_format));
-    if (open (FILEHANDLE, sprintf(">%s", $lin_srec_file_name))) {
+    $lin_srec_file_name = sprintf("%s_lin.%s", $prog_name, lc($srec_format));
+    if (open (FILEHANDLE, sprintf("+>%s", $lin_srec_file_name))) {
 	$out_string = $code->print_lin_srec(uc($prog_name),
 					    $srec_format,
 					    $srec_data_length,
@@ -205,8 +209,8 @@ if ($code->{problems}) {
     ########################
     # write paged S-record #
     ########################
-    $pag_srec_file_name = sprintf(">%s_pag.%s", $prog_name, lc($srec_format));
-    if (open (FILEHANDLE, sprintf(">%s", $pag_srec_file_name))) {
+    $pag_srec_file_name = sprintf("%s_pag.%s", $prog_name, lc($srec_format));
+    if (open (FILEHANDLE, sprintf("+>%s", $pag_srec_file_name))) {
 	$out_string = $code->print_pag_srec(uc($prog_name),
 					    $srec_format,
 					    $srec_data_length,
