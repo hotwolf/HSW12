@@ -313,6 +313,9 @@ Dirk Heisswolf
 =item V00.39 - May 27, 2010
  -"./" is no longer treated as absolute path
   
+=item V00.40 - Fan 19, 2011
+ -added support incremental compiles 
+  
 =cut
 
 #################
@@ -355,7 +358,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.39";#"
+*version = \"00.40";#"
 
 #############################
 # default S-record settings #
@@ -3006,6 +3009,7 @@ sub new {
     my $defines          = shift @_;
     my $cpu              = shift @_;
     my $verbose          = shift @_;
+    my $symbols          = shift @_;
     my $self             = {};
 
     #initalize global variables
@@ -3034,7 +3038,7 @@ sub new {
     #printf STDERR "libs: %s\n", join(", ", @$library_list);
 
     #compile code
-    $self->compile($file_list, $library_list);
+    $self->compile($file_list, $library_list, $symbols);
 
     return $self;
 }
@@ -3052,6 +3056,7 @@ sub new {
 sub reload {
     my $self         = shift @_;
     my $verbose      = shift @_;
+    my $symbols      = $self->{comp_symbols};
 
     #reset global variables
     $self->{problems}         = "no code";
@@ -3069,16 +3074,17 @@ sub reload {
     }
 
     #compile code
-    $self->compile($self->{source_files}, $self->{libraries});
+    $self->compile($self->{source_files}, $self->{libraries}, $symbols);
 }
 
 ###########
 # compile #
 ###########
 sub compile {
-    my $self         = shift @_;
-    my $file_list    = shift @_;
-    my $library_list = shift @_;
+    my $self            = shift @_;
+    my $file_list       = shift @_;
+    my $library_list    = shift @_;
+    my $initial_symbols = shift @_;
     #compile staus
     my $old_undef_count;
     my $new_undef_count;
@@ -3111,7 +3117,6 @@ sub compile {
         $keep_compiling        = 1;
         $result_ok             = 1;
 
-
         #print progress messages
         if ($self->{verbose}) {
             print STDOUT "\n";
@@ -3127,6 +3132,12 @@ sub compile {
             if ($self->{verbose}) {
                 printf STDOUT "%8d  %17d  %17d\n", $self->{compile_count}, $new_undef_count, $redef_count;
             }
+	    
+	    #initialize compiler symbols
+	    if ($self->{compile_count} == 1) {
+		$self->initialize_symbols($initial_symbols);
+	    }
+
             #printf STDERR "compile run: %d\n", $self->{compile_count};
             #printf STDERR "errors:      %d\n", $error_count;
             #printf STDERR "old undefs:  %d\n", $old_undef_count;
@@ -3801,7 +3812,9 @@ sub export_precomp_defs {
         } elsif ($string =~ /^\s*$/) {
             #$string = "1";
             $string = undef;
-        }
+        } else {
+            printf "\"%s\" \"%s\" \n", $key, $string;
+	}
 
         #check if symbol already exists
         if (! exists $self->{comp_symbols}->{uc($key)}) {
@@ -3817,6 +3830,35 @@ sub export_precomp_defs {
             #printf "\"%s\" \"%s\" \"%s\"\n", $key, $string, $value;
         }
     }
+}
+
+######################
+# initialize symbols #
+######################
+sub initialize_symbols {
+    my $self    = shift @_;
+    my $symbols = shift @_;   
+    my $key;
+    my $string;
+    my $error;
+    my $value;
+
+    ###############
+    # symbol loop #
+    ###############
+    foreach $key (keys %{$self->{comp_symbols}}) {
+	if (! defined $self->{comp_symbols}->{$key}) {	
+	    if (exists $symbols->{$key}) {
+		if (defined $symbols->{$key}) {
+		    $self->{comp_symbols}->{$key} = $symbols->{$key};
+		    #printf STDERR "Importing: %s=%s\n",  $key, $symbols->{$key};
+		}
+	    }
+	}
+    }
+    #foreach $key (keys %{$self->{comp_symbols}}) {
+    #	printf STDERR "COMP: %s\n",  $key;
+    #}
 }
 
 ###############
@@ -4086,7 +4128,7 @@ sub compile_run {
 	        @macro_args = ();
 		while ($code_args =~ /^[,\s]*(\".*?\"|\'.*?\'|[^\s,]+)/) {
 		  push @macro_args, $1;
-		  $code_args = $';
+		  $code_args = $';#'
 		  #printf "macros arg:\"%s\, \"%s\"\n", $1, $,;
 		}
 		#printf "macros args: \"%s\" (%d,%d) => %s\n", $code_args, $#macro_args, $self->{macro_argcs}->{$maro_name}, join(", ", @macro_args);
@@ -4300,6 +4342,10 @@ sub compile_run {
 			# new label definition #
 			########################
 			$self->{comp_symbols}->{$code_label} = $label_value;
+			#printf STDERR "new: %s %s undef (%s %s)\n", ($code_label,
+			#	 				      $self->{comp_symbols}->{$code_label},
+			#	 				      ${$code_entry->[1]},
+			#	 				      $code_entry->[0]);
 		    }
 		} else {
 		    #macro label

@@ -148,6 +148,11 @@ r
  -fixed source code output
  -added support for Prolific PL2303 USB adapters 
 
+=item V00.19 - Jan 19, 2010 
+
+ -*.hsw12 sesion files now contain the compiled source code
+ -recompile command now triggers an incremental compile
+
 =back
 
 =cut
@@ -194,8 +199,8 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.18";#"
-*release = \"00.50";#"
+*version = \"00.19";#"
+*release = \"00.51";#"
 
 #####################
 # macro expressions #
@@ -300,7 +305,7 @@ sub new {
 		#save file name
 		$self->{session}->{source_file} = $file_name;
 		#assemble code
-		$self->{code} = hsw12_asm->new([$file_name], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
+		$self->{session}->{code} = hsw12_asm->new([$file_name], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
 		#auto-select variables
 		$self->auto_select_variables();
 		last;};
@@ -321,7 +326,7 @@ sub new {
 		#save file name
 		$self->{session}->{source_file} = $file_name;
 		#assemble code
-		$self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag);
+		$self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag);
 		last;};
 	    #####################
 	    # unknown file type # 
@@ -813,14 +818,14 @@ sub update_main_window {
     # configure widgets #
     #####################
     #code is loaded
-    if (exists $self->{code}->{problems}) {
+    if (exists $self->{session}->{code}->{problems}) {
 	$code_loaded_state = 'normal';
     } else {
 	$code_loaded_state = 'disabled';
     }
     #code is error free
-    if (exists $self->{code}->{problems}) {
-	if (! $self->{code}->{problems}) {
+    if (exists $self->{session}->{code}->{problems}) {
+	if (! $self->{session}->{code}->{problems}) {
 	    $code_error_free_state = 'normal';
 	} else {
 	    $code_error_free_state = 'disabled';
@@ -968,10 +973,10 @@ sub main_window_load_source_code_cmd {
 	#assemble code
 	if (Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
-	    $self->{code} = hsw12_asm->new([$file_name], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
+	    $self->{session}->{code} = hsw12_asm->new([$file_name], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
 	} else {
 	    #use STDOUT
-	    $self->{code} = hsw12_asm->new([$file_name], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
+	    $self->{session}->{code} = hsw12_asm->new([$file_name], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
 	}
 
 	#auto-select variables
@@ -994,14 +999,14 @@ sub main_window_recompile_source_code_cmd {
     #text window
     my $text;
 
-    if (exists $self->{code}->{problems}) {
+    if (exists $self->{session}->{code}->{problems}) {
         $self->{gui}->{main}->Busy(-recurse => 1);
 	if (Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
-	    $self->{code}->reload(0);
+	    $self->{session}->{code}->reload(0);
 	} else {
 	    #use STDOUT
-	    $self->{code}->reload(0);
+	    $self->{session}->{code}->reload(0);
 	}
 	$self->save_geometries();
 	$self->build_gui();
@@ -1019,9 +1024,9 @@ sub main_window_save_list_file_cmd {
     my $file_handle;
     my $file_name;
     
-    if (exists $self->{code}->{problems}) {
+    if (exists $self->{session}->{code}->{problems}) {
 	#suggest file name
-	$file_name = ${$self->{code}->{source_files}}[0];
+	$file_name = ${$self->{session}->{code}->{source_files}}[0];
 	$file_name =~ s/\.+[^\.]*$//;
 	$file_name .= ".lst";
 	#select file name
@@ -1033,7 +1038,7 @@ sub main_window_save_list_file_cmd {
 	if (defined $file_name) {
 	    if ($file_handle = IO::File->new($file_name, O_CREAT|O_WRONLY)) {
 		$file_handle->truncate(0);
-		print $file_handle $self->{code}->print_listing();
+		print $file_handle $self->{session}->{code}->print_listing();
 		$file_handle->close();
 	    } else {
 		$self->show_error_message(sprintf("cannot open \"%s\"", $file_name));
@@ -1054,10 +1059,10 @@ sub main_window_save_linear_srecord_cmd {
     my $file_name;
     my $srec_extension = sprintf(".%s", lc($self->{session}->{preferences}->{srec}->{format}));
 
-    if (exists $self->{code}->{problems}) {
-	if (! $self->{code}->{problems}) {
+    if (exists $self->{session}->{code}->{problems}) {
+	if (! $self->{session}->{code}->{problems}) {
 
-	    $file_name = ${$self->{code}->{source_files}}[0];
+	    $file_name = ${$self->{session}->{code}->{source_files}}[0];
 	    $file_name =~ s/\.+[^\.]*$//;
 	    $file_name .= sprintf("_lin.%s", lc($self->{session}->{preferences}->{srec}->{format}));
 	    #select file name
@@ -1070,9 +1075,9 @@ sub main_window_save_linear_srecord_cmd {
 	    if (defined $file_name) {
 		if ($file_handle = IO::File->new($file_name, O_CREAT|O_WRONLY)) {
 		    $file_handle->truncate(0);
-		    $file_name = ${$self->{code}->{source_files}}[0];
+		    $file_name = ${$self->{session}->{code}->{source_files}}[0];
 		    $file_name =~ s/^\s*//;
-		    print $file_handle $self->{code}->print_lin_srec("HSW12",
+		    print $file_handle $self->{session}->{code}->print_lin_srec("HSW12",
 								     $self->{session}->{preferences}->{srec}->{format},
 								     $self->{session}->{preferences}->{srec}->{length},
 								     $self->{session}->{preferences}->{srec}->{s5},
@@ -1098,10 +1103,10 @@ sub main_window_save_paged_srecord_cmd {
     my $file_name;
     my $srec_extension = sprintf(".%s", lc($self->{session}->{preferences}->{srec}->{format}));
 
-    if (exists $self->{code}->{problems}) {
-	if (! $self->{code}->{problems}) {
+    if (exists $self->{session}->{code}->{problems}) {
+	if (! $self->{session}->{code}->{problems}) {
 
-	    $file_name = ${$self->{code}->{source_files}}[0];
+	    $file_name = ${$self->{session}->{code}->{source_files}}[0];
 	    $file_name =~ s/\.+[^\.]*$//;
 	    $file_name .= sprintf("_pag.%s", lc($self->{session}->{preferences}->{srec}->{format}));
 	    #select file name
@@ -1114,9 +1119,9 @@ sub main_window_save_paged_srecord_cmd {
 	    if (defined $file_name) {
 		if ($file_handle = IO::File->new($file_name, O_CREAT|O_WRONLY)) {
 		    $file_handle->truncate(0);
-		    $file_name = ${$self->{code}->{source_files}}[0];
+		    $file_name = ${$self->{session}->{code}->{source_files}}[0];
 		    $file_name =~ s/^\s*//;
-		    print $file_handle $self->{code}->print_pag_srec("HSW12",
+		    print $file_handle $self->{session}->{code}->print_pag_srec("HSW12",
 								     $self->{session}->{preferences}->{srec}->{format},
 								     $self->{session}->{preferences}->{srec}->{length},
 								     $self->{session}->{preferences}->{srec}->{s5},
@@ -1153,10 +1158,10 @@ sub main_window_import_linear_s12_srecord_cmd {
 	#assemble code
 	if (Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
-	    $self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12, 0);
+	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12, 0);
 	} else {
 	    #use STDOUT
-	    $self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12, 0);
+	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12, 0);
 	}
 
 	#build GUI
@@ -1192,10 +1197,10 @@ sub main_window_import_paged_s12_srecord_cmd {
 	#assemble code
 	if (Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
-	    $self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12, 0);
+	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12, 0);
 	} else {
 	    #use STDOUT
-	    $self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12, 0);
+	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12, 0);
 	}
 
 	#build GUI
@@ -1231,10 +1236,10 @@ sub main_window_import_linear_s12x_srecord_cmd {
 	#assemble code
 	if (Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
-	    $self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12x, 0);
+	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12x, 0);
 	} else {
 	    #use STDOUT
-	    $self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12x, 0);
+	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12x, 0);
 	}
 
 	#build GUI
@@ -1270,10 +1275,10 @@ sub main_window_import_paged_s12x_srecord_cmd {
 	#assemble code
 	if (Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
-	    $self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12x, 0);
+	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12x, 0);
 	} else {
 	    #use STDOUT
-	    $self->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12x, 0);
+	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12x, 0);
 	}
 
 	#build GUI
@@ -1672,14 +1677,14 @@ sub update_terminal_window {
 	# configure widgets #
 	#####################
 	#code is loaded
-	if (exists $self->{code}->{problems}) {
+	if (exists $self->{session}->{code}->{problems}) {
 	    $code_loaded_state = 'normal';
 	} else {
 	    $code_loaded_state = 'disabled';
 	}
 	#code is error free
-	if (exists $self->{code}->{problems}) {
-	    if (! $self->{code}->{problems}) {
+	if (exists $self->{session}->{code}->{problems}) {
+	    if (! $self->{session}->{code}->{problems}) {
 		$code_error_free_state = 'normal';
 	    } else {
 		$code_error_free_state = 'disabled';
@@ -1823,10 +1828,10 @@ sub terminal_send_line_cmd {
 sub terminal_upload_code_cmd {
     my $self     = shift @_;
 
-    if (exists $self->{code}->{problems}) {
+    if (exists $self->{session}->{code}->{problems}) {
       #print linear S-Record
       if (defined $self->{pod}) {
-	$self->{pod}->send_string($self->{code}->print_lin_srec("HSW12",
+	$self->{pod}->send_string($self->{session}->{code}->print_lin_srec("HSW12",
 								$self->{session}->{preferences}->{srec}->{format},
 								$self->{session}->{preferences}->{srec}->{length},
 								$self->{session}->{preferences}->{srec}->{s5},
@@ -2087,14 +2092,14 @@ sub update_source_code_window {
 	# configure widgets #
 	#####################
 	#code is loaded
-	if (exists $self->{code}->{problems}) {
+	if (exists $self->{session}->{code}->{problems}) {
 	    $code_loaded_state = 'normal';
 	} else {
 	    $code_loaded_state = 'disabled';
 	}
 	#code is error free
-	if (exists $self->{code}->{problems}) {
-	    if (! $self->{code}->{problems}) {
+	if (exists $self->{session}->{code}->{problems}) {
+	    if (! $self->{session}->{code}->{problems}) {
 		$code_error_free_state = 'normal';
 	    } else {
 		$code_error_free_state = 'disabled';
@@ -2243,7 +2248,7 @@ sub update_source_code_text {
     #############
     # code loop #
     #############
-    foreach $code_entry (@{$self->{code}->{code}}) {
+    foreach $code_entry (@{$self->{session}->{code}->{code}}) {
 
 	$code_line     = $code_entry->[0];
 	$code_file     = $code_entry->[1];
@@ -2359,8 +2364,8 @@ sub update_source_code_text {
 		####################################
 		#$addr_tag = $source_tag_address;
 		#if (defined $code_pc_pag) {
-		#    if (exists $self->{code}->{pag_addrspace}->{$code_pc_pag}) {
-		#	 if ($self->{code}->{pag_addrspace}->{$code_pc_pag}->[1] == $code_entry) {
+		#    if (exists $self->{session}->{code}->{pag_addrspace}->{$code_pc_pag}) {
+		#	 if ($self->{session}->{code}->{pag_addrspace}->{$code_pc_pag}->[1] == $code_entry) {
 		#	     #highlighted address
 		#	     $addr_tag = sprintf("addr_%.6X", $code_pc_pag);
 		#	     $text->tagConfigure($addr_tag,
@@ -2650,7 +2655,7 @@ sub source_edit_cmd {
     ###########################
     # check if code is loaded #
     ###########################
-    if (exists $self->{code}->{problems}) {
+    if (exists $self->{session}->{code}->{problems}) {
 	$info       = $self->{gui}->{source_code}->{text_info};
 
 	##################
@@ -3088,8 +3093,8 @@ sub auto_select_variables {
     } 
     
     #read compiler symbols
-    while (($var_symb, $var_addr) = each %{$self->{code}->{comp_symbols}}) {
-	if (! exists $self->{code}->{lin_addrspace}->{$var_addr}) {
+    while (($var_symb, $var_addr) = each %{$self->{session}->{code}->{comp_symbols}}) {
+	if (! exists $self->{session}->{code}->{lin_addrspace}->{$var_addr}) {
 	    if (! exists $var_hash{$var_addr}) {
 		$var_hash{$var_addr} = $var_symb;
 	    }
@@ -4164,7 +4169,7 @@ sub new_session {
     ###################
     # forget ASM code #
     ###################
-    $self->{code} = {};
+    $self->{session}->{code} = {};
 
     #######################
     # setup POD interface #
@@ -4272,6 +4277,9 @@ sub new_session {
 
     #ASM code
     $self->{session}->{source_file} = "";
+
+    #code
+    $self->{session}->{code} = {};
 
     #preferences
     $self->{session}->{preferences}->{io}->{device}              = "";
@@ -4454,19 +4462,19 @@ sub restore_session {
 	if (defined $session) {
 	    $self->{session} = $session;
 
-	    #######################
-	    # compile source code #
-	    #######################
-	    $file_name = $self->{session}->{source_file};
-	    if ($file_name !~ /^\s*$/) {
-		if (Exists $self->{gui}->{source_code}->{text_text}) {
-		    #use source code window
-		    $self->{code} = hsw12_asm->new([$self->{session}->{source_file}], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
-		} else {
-		    #use STDOUT
-		    $self->{code} = hsw12_asm->new([$self->{session}->{source_file}], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
-		}
-	    }
+	    ########################
+	    ## compile source code #
+	    ########################
+	    #$file_name = $self->{session}->{source_file};
+	    #if ($file_name !~ /^\s*$/) {
+	    #	if (Exists $self->{gui}->{source_code}->{text_text}) {
+	    #	    #use source code window
+	    #	    $self->{session}->{code} = hsw12_asm->new([$self->{session}->{source_file}], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
+	    #	} else {
+	    #	    #use STDOUT
+	    #	    $self->{session}->{code} = hsw12_asm->new([$self->{session}->{source_file}], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
+	    #	}
+	    #}
 
 	    #######################
 	    # setup POD interface #
@@ -4837,8 +4845,8 @@ sub evaluate_expression {
     ######################
     # evalate expression #
     ######################
-    if (exists $self->{code}->{problems}) {
-	($error, $value) = @{$self->{code}->evaluate_expression($string, undef, undef, undef)};
+    if (exists $self->{session}->{code}->{problems}) {
+	($error, $value) = @{$self->{session}->{code}->evaluate_expression($string, undef, undef, undef)};
     } else {
 	($error, $value) = @{hsw12_asm->evaluate_expression($string, undef, undef, undef)};
 	#($error, $value) = @{hsw12_asm->new([], [], {})->evaluate_expression($string, undef, undef, undef)};
@@ -4922,11 +4930,11 @@ sub evaluate_macro {
 	    /$macro_command_upload/ && do {
 	        #print STDERR "UPLOAD\n";
 		if (($macro_flags & $macro_allow_upload) &&
-		    (exists $self->{code}->{problems})) {
+		    (exists $self->{session}->{code}->{problems})) {
 		    #print linear S-Record
 	            #print STDERR "OK\n";
 		    return [[$pre_string, $macro_tag_default],
-			    [$self->{code}->print_lin_srec("HSW12",
+			    [$self->{session}->{code}->print_lin_srec("HSW12",
 							   $self->{session}->{preferences}->{srec}->{format},
 							   $self->{session}->{preferences}->{srec}->{length},
 							   $self->{session}->{preferences}->{srec}->{s5},
@@ -4944,10 +4952,10 @@ sub evaluate_macro {
 	    #################
 	    /$macro_command_upload_linear/ && do {
 		if (($macro_flags & $macro_allow_upload) &&
-		    (exists $self->{code}->{problems})) {
+		    (exists $self->{session}->{code}->{problems})) {
 		    #print linear S-Record
 		    return [[$pre_string, $macro_tag_default],
-			    [$self->{code}->print_lin_srec("HSW12",
+			    [$self->{session}->{code}->print_lin_srec("HSW12",
 							   $self->{session}->{preferences}->{srec}->{format},
 							   $self->{session}->{preferences}->{srec}->{length},
 							   $self->{session}->{preferences}->{srec}->{s5},
@@ -4964,10 +4972,10 @@ sub evaluate_macro {
 	    ################
 	    /$macro_command_upload_paged/ && do {
 		if (($macro_flags & $macro_allow_upload) &&
-		    (exists $self->{code}->{problems})) {
+		    (exists $self->{session}->{code}->{problems})) {
 		    #print linear S-Record
 		    return [[$pre_string, $macro_tag_default],
-			    [$self->{code}->print_pag_srec("HSW12",
+			    [$self->{session}->{code}->print_pag_srec("HSW12",
 							   $self->{session}->{preferences}->{srec}->{format},
 							   $self->{session}->{preferences}->{srec}->{length},
 							   $self->{session}->{preferences}->{srec}->{s5},
@@ -4984,14 +4992,14 @@ sub evaluate_macro {
 	    #############
 	    /$macro_command_recompile/ && do {
 		if ($macro_flags & $macro_allow_recompile) {
-		    if (exists $self->{code}->{problems}) {
+		    if (exists $self->{session}->{code}->{problems}) {
 			$self->{gui}->{main}->Busy(-recurse => 1);
 			if (Exists $self->{gui}->{source_code}->{text_text}) {
 			  #use source code window
-			  $self->{code}->reload(0);
+			  $self->{session}->{code}->reload(0);
 			} else {
 			  #use STDOUT
-			  $self->{code}->reload(0);
+			  $self->{session}->{code}->reload(0);
 			}
 			
 			$self->save_geometries();

@@ -21,7 +21,7 @@ hsw12asm.pl - HSW12 Command Line Assembler
 
 =head1 REQUIRES
 
-perl5.005, hsw12_asm, File::Basename, FindBin
+perl5.005, hsw12_asm, File::Basename, FindBin, Data::Dumper
 
 =head1 DESCRIPTION
 
@@ -63,9 +63,13 @@ Dirk Heisswolf
 
  -made script more platipus friendly
 
-=item V00.04 -Jun 8, 2010
+=item V00.04 - Jun 8, 2010
 
  -truncate all output files
+
+=item V00.05 - Jan 19, 2010
+
+ -support for incremental compiles
 
 =cut
 
@@ -76,6 +80,7 @@ use 5.005;
 #use warnings;
 use File::Basename;
 use FindBin qw($RealBin);
+use Data::Dumper;
 use lib $RealBin;
 require hsw12_asm;
 
@@ -92,6 +97,7 @@ $srec_format       = $hsw12_asm::srec_def_format;
 $srec_data_length  = $hsw12_asm::srec_def_data_length;
 $srec_add_s5       = $hsw12_asm::srec_def_add_s5;
 $srec_word_entries = 1;
+$symbols           = {};
 $code              = {};
 
 ##########################
@@ -159,13 +165,28 @@ if ($#lib_files < 0) {
   }
 }
 
+####################
+# load symbol file #
+####################
+$symbol_file_name = sprintf("%s/%s.sym", $output_path, $prog_name);
+#printf STDERR "Loading: %s\n",  $symbol_file_name;
+if (open (FILEHANDLE, sprintf("<%s", $symbol_file_name))) {
+    $data = join "", <FILEHANDLE>;
+    eval $data;
+    close FILEHANDLE;
+}
+#printf STDERR $data;
+#printf STDERR "Importing %s\n",  join(",\n", keys %{$symbols});
+#exit;
+
+
 #######################
 # compile source code #
 #######################
 #printf STDERR "src files: \"%s\"\n", join("\", \"", @src_files);  
 #printf STDERR "lib files: \"%s\"\n", join("\", \"", @lib_files);  
 #printf STDERR "defines:   \"%s\"\n", join("\", \"", @defines);  
-$code = hsw12_asm->new(\@src_files, \@lib_files, \%defines, "S12", 1);
+$code = hsw12_asm->new(\@src_files, \@lib_files, \%defines, "S12", 1, $symbols);
 
 ###################
 # write list file #
@@ -189,6 +210,20 @@ if ($code->{problems}) {
     printf STDERR "Problem summary: %s\n", $code->{problems};
 } else {
 
+    #####################
+    # write symbol file #
+    #####################
+    #$symbol_file_name = sprintf("%s/%s.sym", $output_path, $prog_name);
+    if (open (FILEHANDLE, sprintf("+>%s", $symbol_file_name))) {
+	$dump = Data::Dumper->new([$code->{comp_symbols}], ['symbols']);
+	$dump->Indent(2);
+	print FILEHANDLE $dump->Dump;
+ 	close FILEHANDLE;
+    } else {
+	printf STDERR "Can't open symbol file \"%s\"\n", $symbol_file_name;
+	exit;
+    }
+
     #########################
     # write linear S-record #
     #########################
@@ -202,7 +237,7 @@ if ($code->{problems}) {
 	print FILEHANDLE $out_string;
 	close FILEHANDLE;
     } else {
-	printf STDERR "Can't open S-recordfile \"%s\"\n", $lin_srec_file_name;
+	printf STDERR "Can't open S-record file \"%s\"\n", $lin_srec_file_name;
 	exit;
     }
 
@@ -219,7 +254,7 @@ if ($code->{problems}) {
 	print FILEHANDLE $out_string;
 	close FILEHANDLE;
     } else {
-	printf STDERR "Can't open S-recordfile \"%s\"\n", $pag_srec_file_name;
+	printf STDERR "Can't open S-record file \"%s\"\n", $pag_srec_file_name;
 	exit;
     }
 }
