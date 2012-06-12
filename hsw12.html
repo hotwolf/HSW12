@@ -1,13 +1,10 @@
-<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
-<html>
-<head>
-   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-   <title>HSW12</title>
-</head>
-<body background="background.gif " text="#5E34BA" link="#0000EE" vlink="#551A8B" alink="#FE0000">
+---
+layout: default
+title: HSW12 IDE Manual
+---
 
 <center>
-<img align="middle" src="hsw12.gif" alt="hsw12asm">
+<img align="middle" src="{{ site.url}}/images/hsw12.gif" alt="hsw12asm">
 </center>
 
 <ul>
@@ -25,9 +22,8 @@
 <h2 align="left"><a name="introduction">Introduction</a></h2>
 
 The HSW12 IDE is a debugging tool for HC(S)12 assembler code.  
-It runs under LINUX (and probably other UNIXes as well) and provides an interface to the D-BUG12 POD. 
-This whole thing has been written in Perl/Tk so that it can easily be adjusted and enhanced.
-(Speed was a minor concern.)  
+It is written in Perl/Tk and provides an interface to the D-BUG12 POD. 
+  
 It comes with its own <a href="http:hsw12asm.html">assembler</a> which has been written in Perl as well.
 This document gives a quick overview on how to use this software.
 <br>
@@ -39,175 +35,175 @@ Start the HSW12 IDE as follows:<br>
 The optional argument can be either an Assembler file (*.s) of an HSW12 session (*.hsw12).
 <br>
 <br>
-<img src="all.gif" align="middle" alt="Menu Bar">
+<img src="{{ site.url }}/images/all.gif" align="middle" alt="Menu Bar">
 <br>
 <br>
 The HSW12 GUI is split up into several windows to give you the freedom to place its components
 anywhere on the sceen. When you launch "hsw12.pl" the six HSW12 windows will pop up on the screen:<br>
 <dl>
-<dt><img src="1.gif" align="middle" alt="1"><a href="#menu">Menu Bar</a></dt>
-<dt><img src="2.gif" align="middle" alt="2"><a href="#terminal">Terminal Window</a></dt>
-<dt><img src="3.gif" align="middle" alt="3"><a href="#source">Source Code Window</a></dt>
-<dt><img src="4.gif" align="middle" alt="4"><a href="#variables">Variables Window</a></dt>
-<dt><img src="5.gif" align="middle" alt="5"><a href="#registers">Registers Window</a></dt>
-<dt><img src="6.gif" align="middle" alt="6"><a href="#control">Control Window</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif" align="middle" alt="1"><a href="#menu">Menu Bar</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif" align="middle" alt="2"><a href="#terminal">Terminal Window</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif" align="middle" alt="3"><a href="#source">Source Code Window</a></dt>
+<dt><img src="{{ site.url }}/images/4.gif" align="middle" alt="4"><a href="#variables">Variables Window</a></dt>
+<dt><img src="{{ site.url }}/images/5.gif" align="middle" alt="5"><a href="#registers">Registers Window</a></dt>
+<dt><img src="{{ site.url }}/images/6.gif" align="middle" alt="6"><a href="#control">Control Window</a></dt>
 </dl>   
 
 <hr>
 <h2 align="left"><a name="menu">Menu Bar</a></h2>
-<img src="main.gif" align="middle" alt="Menu Bar">
+<img src="{{ site.url }}/images/main.gif" align="middle" alt="Menu Bar">
 <br>
 <br>
 There are four menu buttons in the menu bar:<br>
 <dl>
-<dt><img src="1.gif" align="middle" alt="1"><a href="#menu_file">File Menu Button</a></dt>
-<dt><img src="2.gif" align="middle" alt="2"><a href="#menu_pref">Preferences Menu Button</a></dt>
-<dt><img src="3.gif" align="middle" alt="3"><a href="#menu_window">Window Menu Button</a></dt>
-<dt><img src="4.gif" align="middle" alt="4"><a href="#menu_help">Help Menu Button</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif" align="middle" alt="1"><a href="#menu_file">File Menu Button</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif" align="middle" alt="2"><a href="#menu_pref">Preferences Menu Button</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif" align="middle" alt="3"><a href="#menu_window">Window Menu Button</a></dt>
+<dt><img src="{{ site.url }}/images/4.gif" align="middle" alt="4"><a href="#menu_help">Help Menu Button</a></dt>
 </dl>
 
-<h3 align="left"><a name="menu_file">File Menu Button</a></h3>
-<img src="file.gif" align="middle" alt="File Menu Button">
+<h3 align="left"><a name="{{ site.url }}/images/menu_file">File Menu Button</a></h3>
+<img src="{{ site.url }}/images/file.gif" align="middle" alt="File Menu Button">
 <br>
 <br>
 The File Menu contains ten entries:<br>
 <dl>
-<dt><img src="1.gif"  align="middle" alt="1" >New Session</dt>
+<dt><img src="{{ site.url }}/images/1.gif"  align="middle" alt="1" >New Session</dt>
 <dd>Starts a new HSW12 session.</dd>
-<dt><img src="2.gif"  align="middle" alt="2" >Restore Session</dt>
+<dt><img src="{{ site.url }}/images/2.gif"  align="middle" alt="2" >Restore Session</dt>
 <dd>Restores a previous HSW12 Session.</dd>
-<dt><img src="3.gif"  align="middle" alt="3" >Save Session</dt>
+<dt><img src="{{ site.url }}/images/3.gif"  align="middle" alt="3" >Save Session</dt>
 <dd>Saves the current HSW12 Session.</dd>
-<dt><img src="4.gif"  align="middle" alt="4" >Save Session as...</dt>
+<dt><img src="{{ site.url }}/images/4.gif"  align="middle" alt="4" >Save Session as...</dt>
 <dd>Saves the current HSW12 Session in a new file.</dd>
-<dt><img src="5.gif"  align="middle" alt="5" >Load Source Code</dt>
+<dt><img src="{{ site.url }}/images/5.gif"  align="middle" alt="5" >Load Source Code</dt>
 <dd>Loads an assembler source code file.</dd>
-<dt><img src="6.gif"  align="middle" alt="6" >Recompile Source Code</dt>
+<dt><img src="{{ site.url }}/images/6.gif"  align="middle" alt="6" >Recompile Source Code</dt>
 <dd>Recompiles the current assembler file.</dd>
-<dt><img src="7.gif"  align="middle" alt="7" >Save List File</dt>
+<dt><img src="{{ site.url }}/images/7.gif"  align="middle" alt="7" >Save List File</dt>
 <dd>Dumps an assembler listing.</dd>
-<dt><img src="8.gif"  align="middle" alt="8" >Save Linear S-Record</dt>
+<dt><img src="{{ site.url }}/images/8.gif"  align="middle" alt="8" >Save Linear S-Record</dt>
 <dd>Dumps a linear S-Record file.</dd>
-<dt><img src="9.gif"  align="middle" alt="9" >Save Paged S-Record</dt>
+<dt><img {{ site.url }}/images/src="9.gif"  align="middle" alt="9" >Save Paged S-Record</dt>
 <dd>Dumps a paged S-Record file.</dd>
-<dt><img src="10.gif" align="middle" alt="10">Quit</dt>
+<dt><img src="{{ site.url }}/images/10.gif" align="middle" alt="10">Quit</dt>
 <dd>Quits the HSW12 IDE.</dd>
 </dl>
 
 <h3 align="left"><a name="menu_pref">Preferences Menu Button</a></h3>
-<img src="pref.gif" align="middle" alt="I/O Menu Button">
+<img src="{{ site.url }}/images/pref.gif" align="middle" alt="I/O Menu Button">
 <br>
 <br>
 The Preferences menu allows you to select:<br>
 <dl>
-<dt><img src="1.gif"  align="middle" alt="1"><a href="#menu_pref_term">Terminal I/O Parameters</a></dt>
-<dt><img src="2.gif"  align="middle" alt="2"><a href="#menu_pref_srec">S-Record Format</a></dt>
-<dt><img src="3.gif"  align="middle" alt="3"><a href="#menu_pref_addr">Address Mode</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif"  align="middle" alt="1"><a href="#menu_pref_term">Terminal I/O Parameters</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif"  align="middle" alt="2"><a href="#menu_pref_srec">S-Record Format</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif"  align="middle" alt="3"><a href="#menu_pref_addr">Address Mode</a></dt>
 </dl>
 
 <h4 align="left"><a name="menu_pref_term">Terminal I/O Parameters</a></h4>
-<img src="pref_term.gif" align="middle" alt="Terminal I/O Parameters">
+<img src="{{ site.url }}/images/pref_term.gif" align="middle" alt="Terminal I/O Parameters">
 <br>
 <br>
 The I/O parameters that need to be set are:<br>
 <dl>
-<dt><img src="1.gif"  align="middle" alt="1"><a href="#menu_pref_term_port">Serial Port</a></dt>
-<dt><img src="2.gif"  align="middle" alt="2"><a href="#menu_pref_term_speed">S-Record Format</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif"  align="middle" alt="1"><a href="#menu_pref_term_port">Serial Port</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif"  align="middle" alt="2"><a href="#menu_pref_term_speed">S-Record Format</a></dt>
 </dl>
 
 <h5 align="left"><a name="menu_pref_term_port">Serial Port</a></h5>
-<img src="pref_term_port.gif" align="middle" alt="I/O Port">
+<img src="{{ site.url }}/images/pref_term_port.gif" align="middle" alt="I/O Port">
 <br>
 <br>
-<img src="1.gif"  align="middle" alt="1">This menu selects the port that your D-Bug12 POD is connected to.
+<img src="{{ site.url }}/images/1.gif"  align="middle" alt="1">This menu selects the port that your D-Bug12 POD is connected to.
 (Be careful! Don't select the port that your mouse is connected to.)
 
 <h5 align="left"><a name="menu_pref_term_speed">Baud Rate</a></h5>
-<img src="pref_term_speed.gif" align="middle" alt="Baud Rate">
+<img src="{{ site.url }}/images/pref_term_speed.gif" align="middle" alt="Baud Rate">
 <br>
 <br>
-<img src="1.gif"  align="middle" alt="1">This menu gives you a few choices to select the baud rate. 
+<img src="{{ site.url }}/images/1.gif"  align="middle" alt="1">This menu gives you a few choices to select the baud rate. 
 
 <h4 align="left"><a name="menu_pref_srec">S-Record Format</a></h4>
-<img src="pref_srec.gif" align="middle" alt="S-Record Format">
+<img src="{{ site.url }}/images/pref_srec.gif" align="middle" alt="S-Record Format">
 <br>
 <br>
 There are four setup options to select the S-Record format:<br>
 <dl>
-<dt><img src="1.gif"  align="middle" alt="1"><a href="#menu_pref_srec_format">S-Record Address Format</a></dt>
-<dt><img src="2.gif"  align="middle" alt="2"><a href="#menu_pref_srec_length">S-Record Data Length</a></dt>
-<dt><img src="3.gif"  align="middle" alt="3"><a href="#menu_pref_srec_s5">S5-Record Insertion</a></dt>
-<dt><img src="4.gif"  align="middle" alt="4"><a href="#menu_pref_srec_fill">S-Record Fill Bytes</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif"  align="middle" alt="1"><a href="#menu_pref_srec_format">S-Record Address Format</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif"  align="middle" alt="2"><a href="#menu_pref_srec_length">S-Record Data Length</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif"  align="middle" alt="3"><a href="#menu_pref_srec_s5">S5-Record Insertion</a></dt>
+<dt><img src="{{ site.url }}/images/4.gif"  align="middle" alt="4"><a href="#menu_pref_srec_fill">S-Record Fill Bytes</a></dt>
 </dl>
 
 <h5 align="left"><a name="menu_pref_srec_format">S-Record Address Format</a></h5>
-<img src="pref_srec_format.gif" align="middle" alt="S-Record Address Format">
+<img src="{{ site.url }}/images/pref_srec_format.gif" align="middle" alt="S-Record Address Format">
 <br>
 <br>
-<img src="1.gif"  align="middle" alt="1">The D-Bug12 POD supports two address formats:
+<img src="{{ site.url }}/images/1.gif"  align="middle" alt="1">The D-Bug12 POD supports two address formats:
 <ul>
 <li><b>S19</b>: 16-Bit addresses</li>
 <li><b>S28</b>: 24-Bit addresses</li>
 </ul>
 
 <h5 align="left"><a name="menu_pref_srec_length">S-Record Data Length</a></h5>
-<img src="pref_srec_length.gif" align="middle" alt="S-Record Data Length">
+<img src="{{ site.url }}/images/pref_srec_length.gif" align="middle" alt="S-Record Data Length">
 <br>
 <br>
-The number of data bytes per S-record can be selected in <img src="1.gif"  align="middle" alt="1">this menu.
+The number of data bytes per S-record can be selected in <img src="{{ site.url }}/images/1.gif"  align="middle" alt="1">this menu.
 
 <h5 align="left"><a name="menu_pref_srec_s5">S5-Record Insertion</a></h5>
-<img src="pref_srec_s5.gif" align="middle" alt="S5-Record Insertion">
+<img src="{{ site.url }}/images/pref_srec_s5.gif" align="middle" alt="S5-Record Insertion">
 <br>
 <br>
 S5-Records contain the number of S-Records that have already been transmitted. 
-<img src="1.gif"  align="middle" alt="1">This menu determines how frequently S5-Records should be sent.
-<img src="2.gif"  align="middle" alt="2">"None" disables the insertion of S5-Records.
+<img src="{{ site.url }}/images/1.gif"  align="middle" alt="1">This menu determines how frequently S5-Records should be sent.
+<img src="{{ site.url }}/images/2.gif"  align="middle" alt="2">"None" disables the insertion of S5-Records.
 
 <h5 align="left"><a name="menu_pref_srec_fill">S-Record Fill Bytes</a></h5>
-<img src="pref_srec_fill.gif" align="middle" alt="S-Record Fill Bytes">
+<img src="{{ site.url }}/images/pref_srec_fill.gif" align="middle" alt="S-Record Fill Bytes">
 <br>
 <br>
 Most target devices only allow full words to be programmed into their flashes. 
-<img src="1.gif"  align="middle" alt="1"> The "Fill Bytes" ensures that all S-Records contain an even number 
+<img src="{{ site.url }}/images/1.gif"  align="middle" alt="1"> The "Fill Bytes" ensures that all S-Records contain an even number 
 of bytes by inserting <b>$FF</b> wherever necessary.
 
 <h4 align="left"><a name="menu_pref_addr">Address Mode</a></h4>
-<img src="pref_addr.gif" align="middle" alt="Address Mode">
+<img src="{{ site.url }}/images/pref_addr.gif" align="middle" alt="Address Mode">
 <br>
 <br>
-If <img src="1.gif"  align="middle" alt="1">this is disabled HSW12 will truncate all addresses down to 16-Bit.
+If <img src="{{ site.url }}/images/1.gif"  align="middle" alt="1">this is disabled HSW12 will truncate all addresses down to 16-Bit.
 If it is enabled addresses in the range from <b>$8000</b> to <b>$C000</b> are 24-Bit wide.
 
 <h3 align="left"><a name="menu_window">Window Menu Button</a></h3>
-<img src="window.gif" align="middle" alt="Window Menu Button">
+<img src="{{ site.url }}/images/window.gif" align="middle" alt="Window Menu Button">
 <br>
 <br>
-The Window Menu lets you reopen or raise a particular <img src="1.gif"  align="middle" alt="1">HSW12 window. 
-The <img src="2.gif"  align="middle" alt="2">"All Windows" function reopens or raises all of the HSW12 windows.
-If the <img src="3.gif"  align="middle" alt="3">"connect" checkbutton is set, then all the HSW12 windows are connected. 
+The Window Menu lets you reopen or raise a particular <img src="{{ site.url }}/images/1.gif"  align="middle" alt="1">HSW12 window. 
+The <img src="{{ site.url }}/images/2.gif"  align="middle" alt="2">"All Windows" function reopens or raises all of the HSW12 windows.
+If the <img src="{{ site.url }}/images/3.gif"  align="middle" alt="3">"connect" checkbutton is set, then all the HSW12 windows are connected. 
 Moving one window will make all of them move.
    
 
 <h3 align="left"><a name="menu_help"> Help Menu Button</a></h3>
-<img src="help.gif" align="middle" alt="Help Menu Button">
+<img src="{{ site.url }}/images/help.gif" align="middle" alt="Help Menu Button">
 <br>
 <br>
-At the moment the Help Menu only consists of an <img src="1.gif" align="middle" alt="1">"About" screen 
+At the moment the Help Menu only consists of an <img src="{{ site.url }}/images/1.gif" align="middle" alt="1">"About" screen 
 which contains the version numbers of the current HSW12 release.
 
 <hr>
 <h2 align="left"><a name="terminal">Terminal Window</a></h2>
-<img src="terminal.gif" align="middle" alt="Terminal Window">
+<img src="{{ site.url }}/images/terminal.gif" align="middle" alt="Terminal Window">
 <br>
 <br>
 The Terminal Window consists of:<br>
 <dl>
-<dt><img src="1.gif" align="middle" alt="1"><a href="#terminal_display">Terminal Display</a></dt>
-<dt><img src="2.gif" align="middle" alt="2"><a href="#terminal_entry">Command Entry</a></dt>
-<dt><img src="2.gif" align="middle" alt="3"><a href="#terminal_upload">Upload Button</a></dt>
-<dt><img src="3.gif" align="middle" alt="4"><a href="#terminal_clear">Clear Button</a></dt>
-<dt><img src="4.gif" align="middle" alt="5"><a href="#terminal_macros">Macro Buttons</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif" align="middle" alt="1"><a href="#terminal_display">Terminal Display</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif" align="middle" alt="2"><a href="#terminal_entry">Command Entry</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif" align="middle" alt="3"><a href="#terminal_upload">Upload Button</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif" align="middle" alt="4"><a href="#terminal_clear">Clear Button</a></dt>
+<dt><img src="{{ site.url }}/images/4.gif" align="middle" alt="5"><a href="#terminal_macros">Macro Buttons</a></dt>
 </dl>
 
 <h3 align="left"><a name="terminal_display">Terminal Display</a></h3>
@@ -228,24 +224,24 @@ Each of the Macro Buttons can store a sequence D-Bug12 command. A left-click on 
 A right-click will open a Macro Editor.
 <br>
 <br>
-<img src="edit_macro.gif" align="middle" alt="Macro Editor">
+<img src="{{ site.url }}/images/edit_macro.gif" align="middle" alt="Macro Editor">
 <br>
 <br>
-The two entry fields in the Macro Editor let you modify <img src="1.gif" align="middle" alt="1">the macro name 
-and <img src="2.gif" align="middle" alt="2">the macro sequence. 
+The two entry fields in the Macro Editor let you modify <img src="{{ site.url }}/images/1.gif" align="middle" alt="1">the macro name 
+and <img src="{{ site.url }}/images/2.gif" align="middle" alt="2">the macro sequence. 
 Please find a description of the HSW12 Macro Language <a href="#macro_language">below</a>
 
 <hr>
 <h2 align="left"><a name="source">Source Code Window</a></h2>
-<img src="source.gif" align="middle" alt="Source Code Window">
+<img src="{{ site.url }}/images/source.gif" align="middle" alt="Source Code Window">
 <br>
 <br>
 The Source Code Window has four elements:<br>
 <dl>
-<dt><img src="1.gif" align="middle" alt="1"><a href="#source_display">Source Code Display</a></dt>
-<dt><img src="2.gif" align="middle" alt="2"><a href="#source_follow_pc">Follow PC Switch</a></dt>
-<dt><img src="3.gif" align="middle" alt="3"><a href="#source_address_search">Address Search</a></dt>
-<dt><img src="4.gif" align="middle" alt="4"><a href="#source_address_search">Text Search</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif" align="middle" alt="1"><a href="#source_display">Source Code Display</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif" align="middle" alt="2"><a href="#source_follow_pc">Follow PC Switch</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif" align="middle" alt="3"><a href="#source_address_search">Address Search</a></dt>
+<dt><img src="{{ site.url }}/images/4.gif" align="middle" alt="4"><a href="#source_address_search">Text Search</a></dt>
 </dl>
 
 <h3 align="left"><a name="source_display">Source Code Display</a></h3>
@@ -292,9 +288,9 @@ The entry expects a regular expression.
 <br>
 The Variables Window contains:<br>
 <dl>
-<dt><img src="1.gif" align="middle" alt="1"><a href="#variables_display">Variables Display</a></dt>
-<dt><img src="2.gif" align="middle" alt="2"><a href="#variables_entry">Variables Entry</a></dt>
-<dt><img src="3.gif" align="middle" alt="3"><a href="#variables_edit">Edit Button</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif" align="middle" alt="1"><a href="#variables_display">Variables Display</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif" align="middle" alt="2"><a href="#variables_entry">Variables Entry</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif" align="middle" alt="3"><a href="#variables_edit">Edit Button</a></dt>
 </dl>
 
 <h3 align="left"><a name="variables_display">Variables Display</a></h3>
@@ -311,22 +307,22 @@ The Variables Entry lets you modify memory locations in the MCU. There are three
 Each entry expects an <a href="hsw12asm.html#expressions">HSW12 assembler expression</a>.
 
 <h3 align="left"><a name="variables_edit"></a>Edit Button</h3>
-<img src="edit_variables.gif" align="middle" alt="Macro Editor">
+<img src="{{ site.url }}/images/edit_variables.gif" align="middle" alt="Macro Editor">
 <br>
 <br>
-The Edit Button opens an Editor for <img src="1.gif" align="middle" alt="1">HSW12 Macros 
+The Edit Button opens an Editor for <img src="{{ site.url }}/images/1.gif" align="middle" alt="1">HSW12 Macros 
 to modify the display format.
 
 <hr>
 <h2 align="left"><a name="registers">Registers Window</a></h2>
-<img src="registers.gif" align="middle" alt="Registers Window">
+<img src="{{ site.url }}/images/registers.gif" align="middle" alt="Registers Window">
 <br>
 <br>
 The Register Window lets you view and alter the MCU's register contents. Its window elements are:<br>
 <dl>
-<dt><img src="1.gif" align="middle" alt="1"><a href="#registers_current">Current Register Values</a></dt>
-<dt><img src="2.gif" align="middle" alt="2"><a href="#registers_entry">Registers Entry</a></dt>
-<dt><img src="3.gif" align="middle" alt="3"><a href="#registers_ppage">PPAGE Address</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif" align="middle" alt="1"><a href="#registers_current">Current Register Values</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif" align="middle" alt="2"><a href="#registers_entry">Registers Entry</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif" align="middle" alt="3"><a href="#registers_ppage">PPAGE Address</a></dt>
 </dl>
 
 <h3 align="left"><a name="registers_current">Current Register Values</a></h3>
@@ -345,9 +341,9 @@ The PPAGE Address field tells the HSW12 IDE at which memory location to find the
 <br>
 The Control Window has three elements:<br>
 <dl>
-<dt><img src="1.gif" align="middle" alt="1"><a href="#control_breakpoints">Breakpoint Entry</a></dt>
-<dt><img src="2.gif" align="middle" alt="2"><a href="#control_program_execution">Program Execution Control</a></dt>
-<dt><img src="3.gif" align="middle" alt="3"><a href="#control_update">Update Button</a></dt>
+<dt><img src="{{ site.url }}/images/1.gif" align="middle" alt="1"><a href="#control_breakpoints">Breakpoint Entry</a></dt>
+<dt><img src="{{ site.url }}/images/2.gif" align="middle" alt="2"><a href="#control_program_execution">Program Execution Control</a></dt>
+<dt><img src="{{ site.url }}/images/3.gif" align="middle" alt="3"><a href="#control_update">Update Button</a></dt>
 </dl>
 
 <h3 align="left"><a name="control_breakpoints">Breakpoint Entry</a></h3>
@@ -410,9 +406,6 @@ If this Macro Command is executed from a Terminal macro, no data will be read fr
 only cached data will be used. 
 </dd>
 </dl>
-
-</body>
-</html>
 
 
 
