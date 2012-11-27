@@ -1,7 +1,7 @@
 	CPU	XGATE
 	
 	ORG	$B000
-	DS.W	2 	; reserve two words at cahnnel 0
+	DS.W	2 	; reserve two words at channel 0
 	; channel 1
 	DC.W	_START	; point to start address
 	DC.W	V_PTR    ; point to initial variables

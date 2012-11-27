@@ -153,6 +153,10 @@ r
  -*.hsw12 sesion files now contain the compiled source code
  -recompile command now triggers an incremental compile
 
+=item V00.20 - Nov 20, 2012 
+
+ - added /dev/ttyUSB devices
+
 =back
 
 =cut
@@ -199,8 +203,8 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.19";#"
-*release = \"00.51";#"
+*version = \"00.20";#"
+*release = \"00.52";#"
 
 #####################
 # macro expressions #
@@ -371,6 +375,7 @@ sub new {
 sub create_main_window {
     my $self     = shift @_;
     my $state;
+    my @ttyUSB_devs;
     my @ttyS_devs;
     my @ttydot_devs;
         
@@ -503,17 +508,17 @@ sub create_main_window {
 								  -tearoff => 'false');
 
         #port selection
-        @ttyS_devs   = </dev/ttyS*>;
-        @ttydot_devs = </dev/cu.*>;
-        foreach my $dev (@ttyS_devs, @ttydot_devs) {
-	  $self->{gui}->{menu}->{pref}->{$dev} = 
-	    $self->{gui}->{menu}->{pref}->{term_port_cascade}->radiobutton(-label       => $dev,
-									   -variable    => \$self->{session}->{preferences}->{io}->{device},
-									   -value       => $dev,
-									   -command     => [\&main_window_set_serial_device_cmd, $self],
-									   -selectcolor => $self->{session}->{colors}->{dark_red});
+	@ttyUSB_devs = </dev/ttyUSB*>;
+	@ttyS_devs   = </dev/ttyS*>;
+	@ttydot_devs = </dev/cu.*>;
+	foreach my $dev (@ttyUSB_devs, splice(@ttyS_devs, 0, 12), splice(@ttydot_devs, 0, 12)) {
+		$self->{gui}->{menu}->{pref}->{$dev} = 
+		    $self->{gui}->{menu}->{pref}->{term_port_cascade}->radiobutton(-label       => $dev,
+										   -variable    => \$self->{session}->{preferences}->{io}->{device},
+										   -value       => $dev,
+										   -command     => [\&main_window_set_serial_device_cmd, $self],
+										   -selectcolor => $self->{session}->{colors}->{dark_red});
 	}
-
 	##term_port_com1
 	#$self->{gui}->{menu}->{pref}->{term_port_com1} = 
 	#    $self->{gui}->{menu}->{pref}->{term_port_cascade}->radiobutton(-label       => "COM1",

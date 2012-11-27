@@ -313,8 +313,14 @@ Dirk Heisswolf
 =item V00.39 - May 27, 2010
  -"./" is no longer treated as absolute path
   
-=item V00.40 - Fan 19, 2011
- -added support incremental compiles 
+=item V00.40 - Jan 19, 2011
+ -added support for incremental compiles 
+  
+=item V00.41 - Oct 5, 2012
+ -minor fixes
+  
+=item V00.42 - Nov 27, 2012
+ -improved forced rel8 address mode
   
 =cut
 
@@ -358,7 +364,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.40";#"
+*version = \"00.42";#"
 
 #############################
 # default S-record settings #
@@ -371,9 +377,8 @@ use File::Basename;
 ###################
 # path delimeters #
 ###################
-*path_del         = \qr/[\/\\]/;
-#*path_absolute    = \qr/^\.?[\/\\]/;
-*path_absolute    = \qr/^\[\/\\]/;
+*path_del         = "/";
+*path_absolute    = \qr/^$path_del/;
 
 ########################
 # code entry structure #
@@ -466,6 +471,7 @@ use File::Basename;
 *amod_imm16        = \$amod_imm8;
 *amod_dir          = \qr/^\s*$op_dir\s*$/i;        #$1:address
 *amod_ext          = \qr/^\s*$op_ext\s*$/i;        #$1:address
+*amod_rel8_forced  = \qr/^\s*\<$op_rel\s*$/i;      #$1:address
 *amod_rel8         = \qr/^\s*\<?$op_rel\s*$/i;     #$1:address
 *amod_rel16        = \qr/^\s*\>?$op_rel\s*$/i;     #$1:address
 *amod_idx          = \qr/^\s*$op_idx\s*$/i;        #$1:offset $2:preop $3:register $4:postop
@@ -1075,25 +1081,32 @@ use File::Basename;
                  "ASRA"   => [[$amod_inh,               \&check_inh,                    "47"   ]], #INH
                  "ASRB"   => [[$amod_inh,               \&check_inh,                    "57"   ]], #INH
                  "BCC"    => [[$amod_rel8,              \&check_rel8,                   "24"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 24"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 24"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "24"   ]], #REL
                  "BCLR"   => [[$amod_dir_msk,           \&check_dir_msk,                "4D"   ],  #DIR
                               [$amod_ext_msk,           \&check_ext_msk,                "1D"   ],  #EXT
                               [$amod_idx_msk,           \&check_idx_msk,                "0D"   ],  #IDX
                               [$amod_idx1_msk,          \&check_idx1_msk,               "0D"   ],  #IDX1
                               [$amod_idx2_msk,          \&check_idx2_msk,               "0D"   ]], #IDX2
                  "BCS"    => [[$amod_rel8,              \&check_rel8,                   "25"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 25"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 25"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "25"   ]], #REL
                  "BEQ"    => [[$amod_rel8,              \&check_rel8,                   "27"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 27"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 27"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "27"   ]], #REL
                  "BGE"    => [[$amod_rel8,              \&check_rel8,                   "2C"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2C"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2C"],  #REL
+                              [$amod_rel8,              \&check_rel8,                   "2C"   ]], #REL
                  "BGND"   => [[$amod_inh,               \&check_inh,                    "00"   ]], #INH
                  "BGT"    => [[$amod_rel8,              \&check_rel8,                   "2E"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2E"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2E"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2E"   ]], #REL
                  "BHI"    => [[$amod_rel8,              \&check_rel8,                   "22"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 22"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 22"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "22"   ]], #REL
                  "BHS"    => [[$amod_rel8,              \&check_rel8,                   "24"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 24"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 24"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "24"   ]], #REL
                  "BITA"   => [[$amod_imm8,              \&check_imm8,                   "85"   ],  #IMM
                               [$amod_dir,               \&check_dir,                    "95"   ],  #DIR
                               [$amod_ext,               \&check_ext,                    "B5"   ],  #EXT
@@ -1113,28 +1126,37 @@ use File::Basename;
                               [$amod_iidx2,             \&check_iidx2,                  "E5"   ],  #[IDX2]
                               [$amod_iext,              \&check_iext,                   "E5"   ]], #[EXT]
                  "BLE"    => [[$amod_rel8,              \&check_rel8,                   "2F"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2F"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2F"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2F"   ]], #REL
                  "BLO"    => [[$amod_rel8,              \&check_rel8,                   "25"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 25"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 25"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "25"   ]], #REL
                  "BLS"    => [[$amod_rel8,              \&check_rel8,                   "23"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 23"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 23"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "23"   ]], #REL
                  "BLT"    => [[$amod_rel8,              \&check_rel8,                   "2D"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2D"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2D"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2D"   ]], #REL
                  "BMI"    => [[$amod_rel8,              \&check_rel8,                   "2B"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2B"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2B"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2B"   ]], #REL
                  "BNE"    => [[$amod_rel8,              \&check_rel8,                   "26"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 26"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 26"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "26"   ]], #REL
                  "BPL"    => [[$amod_rel8,              \&check_rel8,                   "2A"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2A"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2A"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2A"   ]], #REL
                  "BRA"    => [[$amod_rel8,              \&check_rel8,                   "20"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 20"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 20"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "20"   ]], #REL
                  "BRCLR"  => [[$amod_dir_msk_rel,       \&check_dir_msk_rel,            "4F"   ],  #DIR
                               [$amod_ext_msk_rel,       \&check_ext_msk_rel,            "1F"   ],  #EXT
                               [$amod_idx_msk_rel,       \&check_idx_msk_rel,            "0F"   ],  #IDX
                               [$amod_idx1_msk_rel,      \&check_idx1_msk_rel,           "0F"   ],  #IDX1
                               [$amod_idx2_msk_rel,      \&check_idx2_msk_rel,           "0F"   ]], #IDX2
                  "BRN"    => [[$amod_rel8,              \&check_rel8,                   "21"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 21"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 21"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "21"   ]], #REL
                  "BRSET"  => [[$amod_dir_msk_rel,       \&check_dir_msk_rel,            "4E"   ],  #DIR
                               [$amod_ext_msk_rel,       \&check_ext_msk_rel,            "1E"   ],  #EXT
                               [$amod_idx_msk_rel,       \&check_idx_msk_rel,            "0E"   ],  #IDX
@@ -1835,25 +1857,32 @@ use File::Basename;
                  "ASRX"   => [[$amod_inh,               \&check_inh,                    "18 47"]], #INH
                  "ASRY"   => [[$amod_inh,               \&check_inh,                    "18 57"]], #INH
                  "BCC"    => [[$amod_rel8,              \&check_rel8,                   "24"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 24"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 24"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "24"   ]], #REL
                  "BCLR"   => [[$amod_s12x_dir_msk,      \&check_s12x_dir_msk,           "4D"   ],  #DIR
                               [$amod_ext_msk,           \&check_ext_msk,                "1D"   ],  #EXT
                               [$amod_idx_msk,           \&check_idx_msk,                "0D"   ],  #IDX
                               [$amod_idx1_msk,          \&check_idx1_msk,               "0D"   ],  #IDX1
                               [$amod_idx2_msk,          \&check_idx2_msk,               "0D"   ]], #IDX2
                  "BCS"    => [[$amod_rel8,              \&check_rel8,                   "25"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 25"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 25"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "25"   ]], #REL
                  "BEQ"    => [[$amod_rel8,              \&check_rel8,                   "27"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 27"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 27"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "27"   ]], #REL
                  "BGE"    => [[$amod_rel8,              \&check_rel8,                   "2C"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2C"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2C"],  #REL
+                              [$amod_rel8,              \&check_rel8,                   "2C"   ]], #REL
                  "BGND"   => [[$amod_inh,               \&check_inh,                    "00"   ]], #INH
                  "BGT"    => [[$amod_rel8,              \&check_rel8,                   "2E"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2E"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2E"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2E"   ]], #REL
                  "BHI"    => [[$amod_rel8,              \&check_rel8,                   "22"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 22"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 22"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "22"   ]], #REL
                  "BHS"    => [[$amod_rel8,              \&check_rel8,                   "24"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 24"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 24"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "24"   ]], #REL
                  "BITA"   => [[$amod_imm8,              \&check_imm8,                   "85"   ],  #IMM
                               [$amod_s12x_dir,          \&check_s12x_dir,               "95"   ],  #DIR
                               [$amod_ext,               \&check_ext,                    "B5"   ],  #EXT
@@ -1891,28 +1920,37 @@ use File::Basename;
                               [$amod_iidx2,             \&check_iidx2,                  "18 E5"],  #[IDX2]
                               [$amod_iext,              \&check_iext,                   "18 E5"]], #[EXT]
                  "BLE"    => [[$amod_rel8,              \&check_rel8,                   "2F"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2F"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2F"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2F"   ]], #REL
                  "BLO"    => [[$amod_rel8,              \&check_rel8,                   "25"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 25"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 25"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "25"   ]], #REL
                  "BLS"    => [[$amod_rel8,              \&check_rel8,                   "23"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 23"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 23"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "23"   ]], #REL
                  "BLT"    => [[$amod_rel8,              \&check_rel8,                   "2D"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2D"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2D"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2D"   ]], #REL
                  "BMI"    => [[$amod_rel8,              \&check_rel8,                   "2B"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2B"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2B"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2B"   ]], #REL
                  "BNE"    => [[$amod_rel8,              \&check_rel8,                   "26"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 26"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 26"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "26"   ]], #REL
                  "BPL"    => [[$amod_rel8,              \&check_rel8,                   "2A"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 2A"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 2A"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "2A"   ]], #REL
                  "BRA"    => [[$amod_rel8,              \&check_rel8,                   "20"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 20"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 20"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "20"   ]], #REL
                  "BRCLR"  => [[$amod_s12x_dir_msk_rel,  \&check_s12x_dir_msk_rel,       "4F"   ],  #DIR
                               [$amod_ext_msk_rel,       \&check_ext_msk_rel,            "1F"   ],  #EXT
                               [$amod_idx_msk_rel,       \&check_idx_msk_rel,            "0F"   ],  #IDX
                               [$amod_idx1_msk_rel,      \&check_idx1_msk_rel,           "0F"   ],  #IDX1
                               [$amod_idx2_msk_rel,      \&check_idx2_msk_rel,           "0F"   ]], #IDX2
                  "BRN"    => [[$amod_rel8,              \&check_rel8,                   "21"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 21"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 21"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "21"   ]], #REL
                  "BRSET"  => [[$amod_s12x_dir_msk_rel,  \&check_s12x_dir_msk_rel,       "4E"   ],  #DIR
                               [$amod_ext_msk_rel,       \&check_ext_msk_rel,            "1E"   ],  #EXT
                               [$amod_idx_msk_rel,       \&check_idx_msk_rel,            "0E"   ],  #IDX
@@ -1925,9 +1963,11 @@ use File::Basename;
                               [$amod_idx2_msk,          \&check_idx2_msk,               "0C"   ]], #IDX2
                  "BSR"    => [[$amod_rel8,              \&check_rel8,                   "07"   ]], #REL
                  "BVC"    => [[$amod_rel8,              \&check_rel8,                   "28"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 28"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 28"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "28"   ]], #REL
                  "BVS"    => [[$amod_rel8,              \&check_rel8,                   "29"   ],  #REL
-                              [$amod_rel16,             \&check_rel16,                  "18 29"]], #REL
+                              [$amod_rel16,             \&check_rel16,                  "18 29"],  #REL
+                              [$amod_rel8_forced,       \&check_rel8_forced,            "29"   ]], #REL
                  "BTAS"   => [[$amod_s12x_dir_msk,      \&check_s12x_dir_msk,           "18 35"],  #DIR
                               [$amod_ext_msk,           \&check_ext_msk,                "18 36"],  #EXT
                               [$amod_idx_msk,           \&check_idx_msk,                "18 37"],  #IDX
@@ -3587,7 +3627,7 @@ sub precompile {
                             if ($ifdef_stack->[$#$ifdef_stack]->[0]) {
                                 #precompile include file
                                 #printf STDERR "INCLUDE: %s\n", join(":", (@$library_list, dirname($file_list->[0])));
-                                $value = $self->precompile([$arg1], [@$library_list, sprintf("%s/", dirname($file_list->[0]))], $ifdef_stack, $macro);
+                                $value = $self->precompile([$arg1], [@$library_list, sprintf("%s%s", dirname($file_list->[0]), $path_del)], $ifdef_stack, $macro);
                                 if ($value) {
                                     $file_handle->close();
                                     return ($value + $error_count);
@@ -7635,6 +7675,34 @@ sub check_rel8 {
 
     #printf STDERR "check_rel8: %s\n", $arg_ref->[0];
     if ($self->get_rel8(2, \$arg_ref->[0], $pc_lin, $pc_pag, $loc_cnt, $sym_tabs, $error_ref, \$value)) {
+        if (defined $value) {
+            $$result_ref = join(" ", ($$hex_ref, $value));
+        } else {
+            $$result_ref = undef;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+#####################
+# check_rel8_forced #
+#####################
+sub check_rel8_forced {
+    my $self       = shift @_;
+    my $arg_ref    = shift @_;
+    my $pc_lin     = shift @_;
+    my $pc_pag     = shift @_;
+    my $loc_cnt    = shift @_;
+    my $sym_tabs   = shift @_;
+    my $hex_ref    = shift @_;
+    my $error_ref  = shift @_;
+    my $result_ref = shift @_;
+    #temporary
+    my $value;
+
+    #printf STDERR "check_rel8: %s\n", $arg_ref->[0];
+    if ($self->get_rel8_forced(2, \$arg_ref->[0], $pc_lin, $pc_pag, $loc_cnt, $sym_tabs, $error_ref, \$value)) {
         if (defined $value) {
             $$result_ref = join(" ", ($$hex_ref, $value));
         } else {
@@ -11952,6 +12020,45 @@ sub get_rel8 {
                  $$result_ref = "??";
                  #return 1;
                  return 0;
+             }
+         }
+     }
+    $$result_ref = "??";
+    #return 0;
+    return 1;
+}
+
+###################
+# get_rel8_forced #
+###################
+sub get_rel8_forced {
+    my $self       = shift @_;
+    my $offset     = shift @_;
+    my $string_ref = shift @_;
+    my $pc_lin     = shift @_;
+    my $pc_pag     = shift @_;
+    my $loc_cnt    = shift @_;
+    my $sym_tabs   = shift @_;
+    my $error_ref  = shift @_;
+    my $result_ref = shift @_;
+    #temporary
+    my $error;
+    my $reladdr;
+    my $value;
+
+    #printf STDERR "get_rel8: %s\n", $$string_ref;
+    ($error, $value) = @{$self->evaluate_expression($$string_ref, $pc_lin, $pc_pag, $loc_cnt, $sym_tabs)};
+    if ($error) {$$error_ref = $error;}
+    if (defined $value) {
+         if (defined $pc_pag) {
+             $reladdr = ((int($value & 0xffff) - int($pc_pag & 0xffff)) - $offset);
+             if (($reladdr >= -128) && ($reladdr <= 127)) {
+                 $$result_ref = sprintf("%.2X", ($reladdr & 0xff));
+                 return 1;
+             } else {
+                 $$result_ref = "??";
+                 return 1;
+                 #return 0;
              }
          }
      }
