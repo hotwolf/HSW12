@@ -179,7 +179,6 @@ if (open (FILEHANDLE, sprintf("<%s", $symbol_file_name))) {
 #printf STDERR "Importing %s\n",  join(",\n", keys %{$symbols});
 #exit;
 
-
 #######################
 # compile source code #
 #######################

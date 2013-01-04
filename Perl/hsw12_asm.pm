@@ -322,6 +322,9 @@ Dirk Heisswolf
 =item V00.42 - Nov 27, 2012
  -improved forced rel8 address mode
   
+=item V00.43 - Jan 4, 2013
+ -range violations in DBEQ, DBNE, TBEQ, TBNE instructions no longer abort the compilation
+  
 =cut
 
 #################
@@ -364,7 +367,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.42";#"
+*version = \"00.43";#"
 
 #############################
 # default S-record settings #
@@ -13638,64 +13641,68 @@ sub get_dbeq {
             #printf STDERR "value:    \"%X\" \"%s\"\n", $value,  $value;
             $rel_addr = int($value & 0xffff)  - int($pc_pag & 0xffff) - 3;
             #printf STDERR "rel_addr: \"%X\" \"%s\"\n", $rel_addr, $rel_addr;
+
+	    ####################
+	    # resolve register #
+	    ####################
+	    for ($$reg_ref) {
+		##########
+		# ACCU A #
+		##########
+		/^\s*A\s*$/i && do {
+		    $post_byte = $post_byte | 0x00;
+		    last;};
+		##########
+		# ACCU B #
+		##########
+		/^\s*B\s*$/i && do {
+		    $post_byte = $post_byte | 0x01;
+		    last;};
+		##########
+		# ACCU D #
+		##########
+		/^\s*D\s*$/i && do {
+		    $post_byte = $post_byte | 0x04;
+		    last;};
+		###########
+		# INDEX X #
+		###########
+		/^\s*X\s*$/i && do {
+		    $post_byte = $post_byte | 0x05;
+		    last;};
+		###########
+		# INDEX Y #
+		###########
+		/^\s*Y\s*$/i && do {
+		    $post_byte = $post_byte | 0x06;
+		    last;};
+		######
+		# SP #
+		######
+		/^\s*SP\s*$/i && do {
+		    $post_byte = $post_byte | 0x07;
+		    last;};
+		############
+		# no match #
+		############
+		return 0;
+	    }
+
+	    ###################
+	    # return hex code #
+	    ###################
             if (($rel_addr >= -256) && ($rel_addr <= 255)) {
                 if ($rel_addr < 0) {
                     $post_byte = $post_byte | 0x10;
                 }
-                ####################
-                # resolve register #
-                ####################
-                for ($$reg_ref) {
-                    ##########
-                    # ACCU A #
-                    ##########
-                    /^\s*A\s*$/i && do {
-                        $post_byte = $post_byte | 0x00;
-                        last;};
-                    ##########
-                    # ACCU B #
-                    ##########
-                    /^\s*B\s*$/i && do {
-                        $post_byte = $post_byte | 0x01;
-                        last;};
-                    ##########
-                    # ACCU D #
-                    ##########
-                    /^\s*D\s*$/i && do {
-                        $post_byte = $post_byte | 0x04;
-                        last;};
-                    ###########
-                    # INDEX X #
-                    ###########
-                    /^\s*X\s*$/i && do {
-                        $post_byte = $post_byte | 0x05;
-                        last;};
-                    ###########
-                    # INDEX Y #
-                    ###########
-                    /^\s*Y\s*$/i && do {
-                        $post_byte = $post_byte | 0x06;
-                        last;};
-                    ######
-                    # SP #
-                    ######
-                    /^\s*SP\s*$/i && do {
-                        $post_byte = $post_byte | 0x07;
-                        last;};
-                    ############
-                    # no match #
-                    ############
-                    return 0;
-                }
 
-                ###################
-                # return hex code #
-                ###################
                 $$result_ref = sprintf("%.2X %.2X", (($post_byte & 0xff),
                                                      ($rel_addr & 0xff)));
                 return 1;
             } else {
-                return 0;
+                $$result_ref = sprintf("%.2X ??", ($post_byte & 0xff));
+                #return 0;
+                return 1;
             }
         } else {
             $$result_ref = "?? ??";
