@@ -3137,7 +3137,7 @@ sub compile {
     my $keep_compiling;
     my $result_ok;
     #compiler runs
-    my $max_comp_runs = 90;
+    my $max_comp_runs = 200;
 
     ##############
     # precompile #
