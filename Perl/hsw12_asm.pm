@@ -325,6 +325,9 @@ Dirk Heisswolf
 =item V00.43 - Jan 4, 2013
  -range violations in DBEQ, DBNE, TBEQ, TBNE instructions no longer abort the compilation
   
+=item V00.44 - Feb 13, 2013
+ -fixed directory path format for Windows
+  
 =cut
 
 #################
@@ -380,8 +383,13 @@ use File::Basename;
 ###################
 # path delimeters #
 ###################
-*path_del         = "/";
-*path_absolute    = \qr/^$path_del/;
+if ($^O =~ /MSWin/i) {
+    $path_del         = "\\";
+    *path_absolute    = \qr/^[A-Z]\:/;
+} else {
+    $path_del         = "\/";
+    *path_absolute    = \qr/^\//;
+}
 
 ########################
 # code entry structure #
@@ -3079,9 +3087,9 @@ sub new {
     #instantiate object
     bless $self, $class;
     #printf STDERR "libs: %s\n", join(", ", @$library_list);
-
+    
     #compile code
-    $self->compile($file_list, $library_list, $symbols);
+    $self->compile($file_list, [@$library_list, sprintf(".%s", $path_del)], $symbols);
 
     return $self;
 }
@@ -3293,7 +3301,8 @@ sub precompile {
         #printf "file_name: %s\n", $file_name;
         $error = 0;
         if ($file_name =~ /$path_absolute/) {
-            #asolute path
+	   #printf "absolute path: %s\n", $file_name;
+           #asolute path
             $file = $file_name;
             if (-e $file) {
                 if (-r $file) {
@@ -3311,6 +3320,7 @@ sub precompile {
                 #print "$error\n";
             }
         } else {
+	    #printf "relative path: %s\n", $file_name;
             #library path
             $match = 0;
             ################

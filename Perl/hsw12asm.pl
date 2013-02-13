@@ -124,7 +124,7 @@ foreach $arg (@ARGV) {
 	push @src_files, $arg;
     } elsif ($arg_type eq "lib") {
 	#library path
-	if ($arg !~ /\/$/) {$arg = sprintf("%s/", $arg);}
+	if ($arg !~ /\/$/) {$arg = sprintf("%s%s", $arg, $hsw12_asm::path_del);}
 	unshift @lib_files, $arg;
         $arg_type          = "src";
     } elsif ($arg_type eq "def") {
@@ -156,8 +156,8 @@ $output_path = dirname($src_files[0], ".s");
 ###################
 # add default lib #
 ###################
-#printf "libraries:    %s (%s)\n",join("\", \"", @lib_files), $#lib_files;
-#printf "source files: %s (%s)\n",join("\", \"", @src_files), $#src_files;
+#printf "libraries:    %s (%s)\n",join(", ", @lib_files), $#lib_files;
+#printf "source files: %s (%s)\n",join(", ", @src_files), $#src_files;
 if ($#lib_files < 0) {
   foreach $src_file (@src_files) {
     #printf "add library:%s/\n", dirname($src_file);
