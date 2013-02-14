@@ -71,6 +71,10 @@ Dirk Heisswolf
 
  -support for incremental compiles
 
+=item V00.06 - Feb 14, 2013
+
+ -S-Record files will be generated in the source directory
+
 =cut
 
 #################
@@ -161,14 +165,14 @@ $output_path = dirname($src_files[0], ".s");
 if ($#lib_files < 0) {
   foreach $src_file (@src_files) {
     #printf "add library:%s/\n", dirname($src_file);
-    push @lib_files, sprintf("%s/", dirname($src_file));
+    push @lib_files, sprintf("%s%s", dirname($src_file), $hsw12_asm::path_del);
   }
 }
 
 ####################
 # load symbol file #
 ####################
-$symbol_file_name = sprintf("%s/%s.sym", $output_path, $prog_name);
+$symbol_file_name = sprintf("%s%s%s.sym", $output_path, $hsw12_asm::path_del, $prog_name);
 #printf STDERR "Loading: %s\n",  $symbol_file_name;
 if (open (FILEHANDLE, sprintf("<%s", $symbol_file_name))) {
     $data = join "", <FILEHANDLE>;
@@ -190,7 +194,7 @@ $code = hsw12_asm->new(\@src_files, \@lib_files, \%defines, "S12", 1, $symbols);
 ###################
 # write list file #
 ###################
-$list_file_name = sprintf("%s/%s.lst", $output_path, $prog_name);
+$list_file_name = sprintf("%s%s%s.lst", $output_path, $hsw12_asm::path_del, $prog_name);
 if (open (FILEHANDLE, sprintf("+>%s", $list_file_name))) {
     $out_string = $code->print_listing();
     print FILEHANDLE $out_string;
@@ -212,7 +216,6 @@ if ($code->{problems}) {
     #####################
     # write symbol file #
     #####################
-    #$symbol_file_name = sprintf("%s/%s.sym", $output_path, $prog_name);
     if (open (FILEHANDLE, sprintf("+>%s", $symbol_file_name))) {
 	$dump = Data::Dumper->new([$code->{comp_symbols}], ['symbols']);
 	$dump->Indent(2);
@@ -226,7 +229,7 @@ if ($code->{problems}) {
     #########################
     # write linear S-record #
     #########################
-    $lin_srec_file_name = sprintf("%s_lin.%s", $prog_name, lc($srec_format));
+    $lin_srec_file_name = sprintf("%s%s%s_lin.%s", $output_path, $hsw12_asm::path_del, $prog_name, lc($srec_format));
     if (open (FILEHANDLE, sprintf("+>%s", $lin_srec_file_name))) {
 	$out_string = $code->print_lin_srec(uc($prog_name),
 					    $srec_format,
@@ -243,7 +246,7 @@ if ($code->{problems}) {
     ########################
     # write paged S-record #
     ########################
-    $pag_srec_file_name = sprintf("%s_pag.%s", $prog_name, lc($srec_format));
+    $pag_srec_file_name = sprintf("%s%s%s_pag.%s", $output_path, $hsw12_asm::path_del, $prog_name, lc($srec_format));
     if (open (FILEHANDLE, sprintf("+>%s", $pag_srec_file_name))) {
 	$out_string = $code->print_pag_srec(uc($prog_name),
 					    $srec_format,
