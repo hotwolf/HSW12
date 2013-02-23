@@ -3,14 +3,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <title>HSW12</title>
-    <link type="application/atom+xml" href="{{ site.url }}/HSW12.xml" rel="self"/>
-    <link type="text" href="{{ site.url }}" rel="alternate"/>
+    <link rel="self" type="application/atom+xml" href="{{ site.url }}/HSW12.atom"/>
+    <link rel="alternate" type="text/html" href="{{ site.url }}" />
     <updated>{{ site.time | date_to_xmlschema }}</updated>
     <id>{{ site.url }}</id>
     <author>
         <name>Dirk Heisswolf</name>
     </author>
-    <rights>Copyright (c) 2010-2012 Dirk Heisswolf</rights>
+    <rights>Copyright (c) 2010-2013 Dirk Heisswolf</rights>
     {% for post in site.posts %}
     <entry>
         <title>{{ post.title }}</title>
