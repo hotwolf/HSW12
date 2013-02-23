@@ -1448,7 +1448,7 @@ sub main_window_about_cmd {
     $about_text .= sprintf("OS:               %s\n", $^O);
     $about_text .= sprintf("\n");
     $about_text .= sprintf("\n");
-    $about_text .= sprintf("Dirk Heisswolf <hsw12\@mail.com>\n");
+    $about_text .= sprintf("Dirk Heisswolf <%s\@%s.%s>\n", "HSW12", "hotwolf", "de");
 
     $self->{gui}->{about_dialog}->{toplevel} = $self->{gui}->{main}->Toplevel(-title => "About HSW12...");
     $self->{gui}->{about_dialog}->{toplevel}->gridColumnconfigure(0, -weight => 1);
