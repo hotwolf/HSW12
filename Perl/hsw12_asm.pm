@@ -431,7 +431,7 @@ if ($^O =~ /MSWin/i) {
 *precomp_emac         = \qr/emac/i;
 *precomp_blanc_line   = \qr/^\s*$/;
 *precomp_comment_line = \qr/^\s*[\;\*]/;
-#*precomp_opcode       = \qr/^([^\#]\w*\`?):?\s*([\w\.]*)\s*([^;]*)\s*[;\*]?/;        #$1:label $2:opcode $3:arguments
+#*precomp_opcode      = \qr/^([^\#]\w*\`?):?\s*([\w\.]*)\s*([^;]*)\s*[;\*]?/;        #$1:label $2:opcode $3:arguments
 *precomp_opcode       = \qr/^([^\#]\w*\`?):?\s*([\w\.]*)\s*((?:\".*?\"|\'.*?\'|[^;])*)\s*[;\*]?/;        #$1:label $2:opcode $3:arguments
 
 #############
@@ -481,175 +481,169 @@ if ($^O =~ /MSWin/i) {
 
 #operands (S12Z)
 ################
-*op_s12z_keywords      = \qr/^\s*(D[0-7]|X|Y|S|SP|CCR|P|PC)\s*$/i;                                      #$1: keyword
-#immediate/ext
+*op_s12z_keywords      = \qr/^\s*(D[0-7]|X|Y|S|SP|C|CCR|CCH|CCL|P|PC)\s*$/i;                            #$1: keyword
+#immediate
 *op_s12z_np_imm        = \qr/\#$expr/i; 
+*op_s12z_np_wo         = \qr/\#$expr\s*:\s*$expr/i; 
+#extended
 *op_s12z_np_ext        = \qr/$expr/i; 
 #registers
 *op_s12z_np_d          = \qr/D[0-7]/i; 
-*op_s12z_np_xysp       = \qr/X|Y|SP|S|PC|P/i;
+*op_s12z_np_d0123      = \qr/D[0-3]/i; 
+*op_s12z_np_d4567      = \qr/D[4-7]/i;
+*op_s12z_np_dxysc      = \qr/D[0-7]|X|Y|SP|S|C|CCR|CCH|CCL/i;
+*op_s12z_np_xysp       = \qr/X|Y|SP|S|P|PC/i;
 *op_s12z_np_xys        = \qr/X|Y|SP|S/i;
 *op_s12z_np_xy         = \qr/X|Y|SP|S/i;
 *op_s12z_np_s          = \qr/SP|S/i;
-#inc/dec
+*op_s12z_np_c          = \qr/C|CCR|CCH|CCL/i;
+*op_s12z_d             = \qr/($op_s12z_np_d)/i; 
+#indexed
+*op_s12z_np_idx_ext_xys  = \qr/\(\s*$expr\s*,\s*$op_s12z_np_xys\s*\)/i; 
+*op_s12z_np_idx_ext_xysp = \qr/\(\s*$expr\s*,\s*$op_s12z_np_xysp\s*\)/i; 
+*op_s12z_np_idx_ext_d    = \qr/\(\s*$expr\s*,\s*$op_s12z_np_d\s*\)/i; 
+*op_s12z_np_idx          = \qr/$op_s12z_np_idx_ext_xysp|$op_s12z_np_idx_ext_d/i; 
+#indexed indirect
+*op_s12z_np_iidx_d_xy     = \qr/\[\s*$op_s12z_np_d\s*,\s*$op_s12z_np_xy\s*\]/i; 
+*op_s12z_np_iidx_ext_xysp = \qr/\[\s*$expr\s*,\s*$op_s12z_np_xysp\s*\]/i; 
+*op_s12z_np_iidx_ext      = \qr/\[\s*$expr\s*\]/i; 
+*op_s12z_np_iidx          = \qr/$op_s12z_np_iidx_d_xy|$op_s12z_np_iidx_ext_xysp|$op_s12z_np_iidx_ext/i; 
+#pre/post inc/dec
 *op_s12z_np_inc        = \qr/\+/i; 
 *op_s12z_np_dec        = \qr/\-/i; 
-#index operands
-*op_s12z_np_off_xys    = \qr/$offset\s*,\s*$op_s12z_np_xys/i;
-*op_s12z_np_off_xysp   = \qr/$offset\s*,\s*$op_s12z_np_xysp/i;
-*op_s12z_np_off_d      = \qr/$offset\s*,\s*$op_s12z_np_d/i;
-*op_s12z_np_preinc_xy  = \qr/$op_s12z_np_inc$op_s12z_np_xy/i;
-*op_s12z_np_postinc_xy = \qr/$op_s12z_np_xy$op_s12z_np_inc/i;
-*op_s12z_np_predec_xy  = \qr/$op_s12z_np_dec$op_s12z_np_xy/i;
-*op_s12z_np_postdec_xy = \qr/$op_s12z_np_xy$op_s12z_np_dec/i;
-*op_s12z_np_postinc_s  = \qr/$op_s12z_np_s$op_s12z_np_inc/i;
-*op_s12z_np_predec_s   = \qr/$op_s12z_np_dec$op_s12z_np_s/i;
-*op_s12z_np_autoinc    = \qr/$op_s12z_np_preinc_xy|$op_s12z_np_postinc_xy|$op_s12z_np_predec_xy|$op_s12z_np_postdec_xy|$op_s12z_np_postinc_s|$op_s12z_np_predec_s/i;
-*op_s12z_np_d_xys      = \qr/$op_s12z_np_d\s*,\s*$op_s12z_np_xys/i;
-*op_s12z_np_d_xy       = \qr/$op_s12z_np_d\s*,\s*$op_s12z_np_xy/i;
-#opr/opr1/opr2/opr3
-*op_s12z_np_opr_idxi   = \qr/$op_s12z_np_off_xys|$op_s12z_np_autoinc|$op_s12z_np_d_xys|$op_s12z_np_off_d/i;
-*op_s12z_np_opr_idx    = \qr/\($op_s12z_np_opr_idxi\)/i;
-*op_s12z_np_opr_iidx   = \qr/\[$op_s12z_np_opr_d_xy\]/i;
-*op_s12z_np_opr        = \qr/$op_s12z_np_imm|$op_s12z_np_ext|$op_s12z_np_opr_idx|$op_s12z_np_opr_iidx/i;
-*op_s12z_np_opr1_idx   = \qr/\($op_s12z_np_off_xysp\)i;
-*op_s12z_np_opr1_iidx  = \qr/\[$op_s12z_np_off_xysp\]/i;
-*op_s12z_np_opr1       = \qr/$op_s12z_np_ext|$op_s12z_np_opr1_idx|$op_s12z_np_opr1_iidx/i;
-*op_s12z_np_opr2_idx   = \qr/\($op_s12z_np_off_d\)i;
-*op_s12z_np_opr2       = \qr/$op_s12z_np_ext|$op_s12z_np_opr2_idx/i;
-*op_s12z_np_opr3_idxi  = \qr/$op_s12z_np_off_xysp|$op_s12z_np_off_d/i;
-*op_s12z_np_opr3_idx   = \qr/\($op_s12z_np_opr3_idx_\)/i;
-*op_s12z_np_opr3_iidxi = \qr/$op_s12z_np_off_xysp|$op_s12z_np_ext/i;
-*op_s12z_np_opr3_iidx  = \qr/\[$op_s12z_np_opr3_iidxi\]/i;
-*op_s12z_np_opr3       = \qr/$op_s12z_np_ext|$op_s12z_np_opr3_idx|$op_s12z_np_opr3_iidx/i;
-*op_s12z_np_opr123     = \qr/$op_s12z_np_opr|$op_s12z_np_opr1|$op_s12z_np_opr2|$op_s12z_np_opr3/i;
-
-
-#index modes
-
-
-
-
-*op_s12z_imm           = \qr/\#($expr)/i;                                                               # $1:value                 
-*op_s12z_ext           = \qr/($expr)/i; 								# $1:value
-*op_s12z_d             = \qr/($op_s12z_np_d)/i; 							# $1:register
-*op_s12z_xysp          = \qr/($op_s12z_np_xysp)/i;							# $1:register
-*op_s12z_xys           = \qr/($op_s12z_np_xys)/i;							# $1:register
-*op_s12z_xy            = \qr/($op_s12z_np_xy)/i;							# $1:register
-*op_s12z_preinc        = \qr/\+($op_s12z_np_xy)/i; 							# $1:register
-*op_s12z_predec        = \qr/\-($op_s12z_np_xys)/i; 							# $1:register
-*op_s12z_postinc       = \qr/($op_s12z_np_xys)\+/i; 							# $1:register
-*op_s12z_postdec       = \qr/($op_s12z_np_xy)\-/i; 							# $1:register
-*op_s12z_autoinc       = \qr/($op_s12z_autoinc)/i;							# $1:register
-*op_s12z_off_xys       = \qr/($offset)\s*,\s*($op_s12z_np_xys)/i;					# $1:offset    $2:register
-*op_s12z_off_xysp      = \qr/($offset)\s*,\s*($op_s12z_np_xysp)/i;					# $1:offset    $2:register
-*op_s12z_d_xys         = \qr/($op_s12z_np_d)\s*,\s*($op_s12z_np_xys)/i;					# $1:register  $2:register
-*op_s12z_d_xy          = \qr/($op_s12z_np_d)\s*,\s*($op_s12z_np_xy)/i;					# $1:register  $2:register
-*op_s12z_off_d         = \qr/($offset)\s*,\s*($op_s12z_np_d)/i;						# $1:offset    $2:register
-*op_s12z_idx           = \qr/($op_s12z_np_idx)/i;							# $1:register
-*op_s12z_iidx          = \qr/($op_s12z_np_iidx)/i;                                                      # $1:argument                               
-*op_s12z_opr           = \qr/($op_s12z_np_opr)/i;
-
-#*op_s12z_xy            = \qr/([XY])/i;                                                                  #$1:register
-#*op_s12z_s             = \qr/(SP|S)/i;                                                                  #$1:register
-#*op_s12z_dreg          = \qr/(D[0-7])/i;                                                                #$1:register
-#*op_s12z_d67           = \qr/(D[67])/i;                                                                 #$1:register
-#*op_s12z_imm           = \qr/\#$op_expr/i;                                                              #$1:value
-#*op_s12z_idxxys        = \qr/\(\s*$op_offset\s*,\s*(X|Y|SP|S)\s*\)/i;                                   #$1:offset   $2:register
-#*op_s12z_incidx        = \qr/\(\s*([\+\-]?)(X|Y|S)([\+\-]?)\s*\)/i;                                     #$1:preop    $2:register $3:postop
-#*op_s12z_idxdoffs      = \qr/\(\s*$D[0-7]\s*,\s*(X|Y|SP|S|PC|P)\s*\)/i;                                 #$1:register $2:register
-#*op_s12z_iidxdoffs     = \qr/\[\s*$D[0-7]\s*,\s*(X|Y|SP|S|PC|P)\s*\]/i                                  #$1:register $2:register
-#*op_s12z_idxxysp       = \qr/\(\s*$op_offset\s*,\s*(X|Y|SP|S|PC|P)\s*\)/i;                              #$1:offset   $2:register
-#*op_s12z_iidxxysp      = \qr/\[\s*$op_offset\s*,\s*(X|Y|SP|S|PC|P)\s*\]/i;                              #$1:offset   $2:register
-#*op_s12z_ext           = \qr/\$op_expr/i;                                                               #$1:value
-#*op_s12z_idxdreg       = \qr/\(\s*$op_offset\s*,\s*(D[0-7])\s*\)/i;
-#*op_s12z_iext          = \qr/\[$op_expr\]/i;                                                            #$1:value
-#
-#*op_s12z_reg           = \qr/(D[0-7]|X|Y|SP|PC|CCW|CCL|CCH)/i;                                          #$1:register
-#*op_s12z_rel           = \qr/\#$op_expr/i;                                                              #$1:value
-#*op_s12z_pshreg        = \qr/(D[07]|X|Y|CCH|CCL|CC|ALL|ALL16B)/i;                                          #$1:register
-#*op_s12z_pshreg_del      = \qr/$del$op_s12z_pshreg/i;                                                   #$1:register
-#
-#*op_s12z_iidx          = \qr/\[\s*$op_offset\s*,\s*(X|Y|SP|PC)\s*\]/i;                                  #$1:offset $2:register
-#*op_s12z_incidx        = \qr/\(\s*([\+\-]?)(X|Y|S)([\+\-]?)\s*\)/i;                                     #$1:preop $2:register $3:postop
-#*op_s12z_regidx        = \qr/\(\s*$op_s12z_reg\s*,\s*(X|Y|SP)\s*\)/i;                                   #$1:register $2:register
-#*op_s12z_regiidx       = \qr/\[\s*$op_s12z_reg\s*,\s*(X|Y)\s*\)]i;                                      #$1:register $2:register
-#*op_s12z_idxreg        = \qr/\(\s*$op_offset\s*,\s*$op_s12z_reg\s*\)/i;                                 #$1:offset $2:register
-#*op_s12z_idxreg        = \qr/\[\s*$op_offset\s*,\s*$op_s12z_reg\s*\]/i;                                 #$1:offset $2:register
-#*op_s12z_ext           = \qr/\$op_expr/i;                                                               #$1:value
+*op_s12z_np_preinc     = \qr/\($op_s12z_np_inc$op_s12z_np_xy\)/i; 
+*op_s12z_np_predec     = \qr/\($op_s12z_np_dec$op_s12z_np_xys\)/i; 
+*op_s12z_np_postinc    = \qr/\($op_s12z_np_xys$op_s12z_np_inc\)/i; 
+*op_s12z_np_postdec    = \qr/\($op_s12z_np_xys$op_s12z_np_dec\)/i; 
+*op_s12z_np_autoinc    = \qr/$op_s12z_np_preinc|$op_s12z_np_predec|$op_s12z_np_postinc|$op_s12z_np_postdec/i; 
+#xb
+*op_s12z_np_xb         = \qr/$op_s12z_np_imm|$op_s12z_np_ext|$op_s12z_np_idx|$op_s12z_np_iidx|$op_s12z_np_autoinc/i;
+#mb
+*op_s12z_np_mb_d_d     = \qr/$op_s12z_np_d$del$op_s12z_np_d$del$op_s12z_np_d/i;
+*op_s12z_np_mb_d_xb    = \qr/$op_s12z_np_d$del$op_s12z_np_d$del$op_s12z_np_xp/i;
+*op_s12z_np_mb_d_imm   = \qr/$op_s12z_np_d$del$op_s12z_np_d$del$op_s12z_np_imm/i;
+*op_s12z_np_mb_xb_xb   = \qr/$op_s12z_np_d$del$op_s12z_np_xb$del$op_s12z_np_xp/i;
+*op_s12z_np_mb         = \$op_s12z_np_mb_d_d;
+*op_s12z_np_mbsz       = \qr/$op_s12z_np_mb_d_xb|$op_s12z_np_mb_d_imm/i;
+*op_s12z_np_mbszsz     = \$op_s12z_np_mb_xb_xb;
+#lb
+*op_s12z_np_lb_d       = \qr/$op_s12z_np_d$del$op_s12z_np_ext/i;
+*op_s12z_np_lb_xy      = \qr/$op_s12z_np_xy$del$op_s12z_np_ext/i;
+*op_s12z_np_lb_xb      = \qr/$op_s12z_np_xb$del$op_s12z_np_ext/i;
+*op_s12z_np_lb         = \qr/$op_s12z_np_lb_d|$op_s12z_np_lb_xy/i;
+*op_s12z_np_lbsz       = \$op_s12z_np_lb_xb;
+#sb
+*op_s12z_np_sb_d_imm   = \qr/$op_s12z_np_d$del$op_s12z_np_d$del$op_s12z_np_imm/i;
+*op_s12z_np_sb_d_d     = \qr/$op_s12z_np_d$del$op_s12z_np_d$del$op_s12z_np_d/i;
+*op_s12z_np_sb_d_xb    = \qr/$op_s12z_np_d$del$op_s12z_np_d$del$op_s12z_np_xp/i;
+*op_s12z_np_sb_imm     = \qr/$op_s12z_np_d$del$$op_s12z_np_imm/i;
+*op_s12z_np_sb_xb      = \qr/$op_s12z_np_d$del$op_s12z_np_xp/i;
+*op_s12z_np_sb_xb_imm  = \qr/$op_s12z_np_d$del$op_s12z_np_xp$del$op_s12z_np_imm/i;
+*op_s12z_np_sb_xb_d    = \qr/$op_s12z_np_d$del$op_s12z_np_xp$del$op_s12z_np_d/i;
+*op_s12z_np_sb_xb_xb   = \qr/$op_s12z_np_d$del$op_s12z_np_xp$del$op_s12z_np_xb/i;
+*op_s12z_np_sb         = \qr/$op_s12z_np_d_imm$|$op_s12z_np_d_d|$op_s12z_np_d_xb|$op_s12z_np_sb_imm/i;
+*op_s12z_np_sb_rot     = \$op_s12z_np_xb;
+*op_s12z_np_sbsz       = \qr/$op_s12z_np_sb_xb_imm|$op_s12z_np_sb_xb_d|$op_s12z_np_sb_xb_xb/i;
+#bm
+*op_s12z_np_bm_d_imm   = \qr/$op_s12z_np_d$del$$op_s12z_np_imm/i;
+*op_s12z_np_bm_xb_imm  = \qr/$op_s12z_np_xb$del$$op_s12z_np_imm/i;
+*op_s12z_np_bm_d_xb    = \qr/$op_s12z_np_d$del$$op_s12z_np_xb/i;
+*op_s12z_np_bm         = \$op_s12z_np_bm_d_imm;
+*op_s12z_np_bmsz       = \qr/$op_s12z_np_bm_xb_imm|$op_s12z_np_bm_d_xb/i;
+#bb
+*op_s12z_np_bb_d_d_d   = \qr/$op_s12z_np_d$del$op_s12z_np_d$del$op_s12z_np_d/i;
+*op_s12z_np_bb_d_d_wo  = \qr/$op_s12z_np_d$del$op_s12z_np_d$del$op_s12z_np_wo/i;
+*op_s12z_np_bb_d_xb_d  = \qr/$op_s12z_np_d$del$op_s12z_np_xb$del$op_s12z_np_d/i;
+*op_s12z_np_bb_xb_d_d  = \qr/$op_s12z_np_xb$del$op_s12z_np_d$del$op_s12z_np_d/i;
+*op_s12z_np_bb_d_xb_wo = \qr/$op_s12z_np_d$del$op_s12z_np_xb$del$op_s12z_np_wo/i;
+*op_s12z_np_bb_xb_d_wo = \qr/$op_s12z_np_xb$del$op_s12z_np_d$del$op_s12z_np_wo/i;
+*op_s12z_np_bm         = \qr/$op_s12z_np_bb_d_d_d|$op_s12z_np_bb_d_d_wo/i;
+*op_s12z_np_bmsz       = \qr/$op_s12z_np_bb_d_xb_d|$op_s12z_np_bb_xb_d_d|$op_s12z_np_bb_d_xb_wo|$op_s12z_np_bb_xb_d_wo/i;
+#tb, ev
+#*op_s12z_np_tb        = \qr/$op_s12z_np_dxysc$del$op_s12z_np_dxysc/i;
+*op_s12z_tb            = \qr/($op_s12z_np_dxysc)$del($op_s12z_np_dxysc)/i;
+#cb
+#*op_s12z_np_cb        = \qr/$op_s12z_np_d$del$op_s12z_np_d/i;
+*op_s12z_cb            = \qr/($op_s12z_np_d)$del($op_s12z_np_d)/i;
+#pb
+*op_s12z_np_pb_all      = \qr/ALL/i; 
+*op_s12z_np_pb_all16b   = \qr/ALL16B/i; 
+*op_s12z_np_pb_msk1_del = \qr/$op_s12z_np_c$del?|$op_s12z_np_d0123$del?/i; 
+*op_s12z_np_pb_msk2_del = \qr/$op_s12z_np_d4567$del?/i; 
+*op_s12z_np_pb          = \qr/$op_s12z_np_pb_all|$op_s12z_np_pb_all16b|$op_s12z_np_pb_msk1_del+|$op_s12z_np_pb_msk2_del+/i; 
 
 #operands (HC11)
 ################
 *op_hc11_keywords      = \qr/^\s*(A|B|D|X|XL|Y|YH|YL|SP|SPH|SPL|CCR|CCRL|PC|TMP1|TMP3|TMP3H|TMP3L|UNMAPPED)\s*$/i; #$1: keyword
-*op_indx               = \qr/$op_offset$del[X]/i;                                                       #$1:offset $2:preop $3:register $4:postop
-*op_indy               = \qr/$op_offset$del[Y]/i;                                                       #$1:offset $2:preop $3:register $4:postop
+*op_indx               = \qr/$op_offset$del[X]/i;                                                        #$1:offset $2:preop $3:register $4:postop
+*op_indy               = \qr/$op_offset$del[Y]/i;                                                        #$1:offset $2:preop $3:register $4:postop
 
 #operands (XGATE)
 #################
 *op_xgate_keywords      = \qr/^\s*(R[0-7]|CCR|PC|UNMAPPED)\s*$/i;                                        #$1: keyword
-*op_xgate_reg_gpr      = \qr/(R[0-7])/i;                                                                #$1:register
-*op_xgate_reg_src      = \qr/(R[0-7]|CCR)/i;                                                            #$1:register
-*op_xgate_reg_dst      = \qr/(R[0-7]|CCR)/i;                                                            #$1:register
-
-#operands (pseudo opcodes)
-##########################
-*op_psop               = \qr/$op_expr/i;                                                                #$1:operand
+*op_xgate_reg_gpr      = \qr/(R[0-7])/i;                                                                 #$1:register
+*op_xgate_reg_src      = \qr/(R[0-7]|CCR)/i;                                                             #$1:register
+*op_xgate_reg_dst      = \qr/(R[0-7]|CCR)/i;                                                             #$1:register
+													 
+#operands (pseudo opcodes)										 
+##########################										 
+*op_psop               = \qr/$op_expr/i;                                                                 #$1:operand
 
 #S12 address modes
 ##################
 *amod_inh          = \qr/^\s*$/i;
-*amod_imm8         = \qr/^\s*$op_imm\s*$/i;        #$1:data
-*amod_imm16        = \$amod_imm8;
-*amod_dir          = \qr/^\s*$op_dir\s*$/i;        #$1:address
-*amod_ext          = \qr/^\s*$op_ext\s*$/i;        #$1:address
-*amod_rel8_forced  = \qr/^\s*\<$op_rel\s*$/i;      #$1:address
-*amod_rel8         = \qr/^\s*\<?$op_rel\s*$/i;     #$1:address
-*amod_rel16        = \qr/^\s*\>?$op_rel\s*$/i;     #$1:address
-*amod_idx          = \qr/^\s*$op_idx\s*$/i;        #$1:offset $2:preop $3:register $4:postop
-*amod_idx1         = \qr/^\s*$op_idx1\s*$/i;       #$1:offset $2:register
-*amod_idx2         = \$amod_idx1;
-*amod_ididx        = \qr/^\s*$op_ididx\s*$/i;      #$1:register
-*amod_iidx2        = \qr/^\s*$op_iidx2\s*$/i;      #$1:offset $2:register
-*amod_iext         = \qr/^\s*$op_iext\s*$/i;       #$1:address
+*amod_imm8         = \qr/^\s*$op_imm\s*$/i;                                                              #$1:data
+*amod_imm16        = \$amod_imm8;		                                                         
+*amod_dir          = \qr/^\s*$op_dir\s*$/i;                                                              #$1:address
+*amod_ext          = \qr/^\s*$op_ext\s*$/i;                                                              #$1:address
+*amod_rel8_forced  = \qr/^\s*\<$op_rel\s*$/i;                                                            #$1:address
+*amod_rel8         = \qr/^\s*\<?$op_rel\s*$/i;                                                           #$1:address
+*amod_rel16        = \qr/^\s*\>?$op_rel\s*$/i;                                                           #$1:address
+*amod_idx          = \qr/^\s*$op_idx\s*$/i;                                                              #$1:offset $2:preop $3:register $4:postop
+*amod_idx1         = \qr/^\s*$op_idx1\s*$/i;                                                             #$1:offset $2:register
+*amod_idx2         = \$amod_idx1;		                                                         
+*amod_ididx        = \qr/^\s*$op_ididx\s*$/i;                                                            #$1:register
+*amod_iidx2        = \qr/^\s*$op_iidx2\s*$/i;                                                            #$1:offset $2:register
+*amod_iext         = \qr/^\s*$op_iext\s*$/i;                                                             #$1:address
 
-*amod_dir_msk      = \qr/^\s*$op_dir$del$op_msk\s*$/i;  #$1:address $2:mask
-*amod_ext_msk      = \qr/^\s*$op_ext$del$op_msk\s*$/i;  #$1:address $2:mask
-*amod_idx_msk      = \qr/^\s*$op_idx$del$op_msk\s*$/i;  #$1:offset $2:preop $3:register $4:postop $4:mask
-*amod_idx1_msk     = \qr/^\s*$op_idx1$del$op_msk\s*$/i; #$1:offset $2:register $3:mask
-*amod_idx2_msk     = \$amod_idx1_msk;
+*amod_dir_msk      = \qr/^\s*$op_dir$del$op_msk\s*$/i;                                                   #$1:address $2:mask
+*amod_ext_msk      = \qr/^\s*$op_ext$del$op_msk\s*$/i;                                                   #$1:address $2:mask
+*amod_idx_msk      = \qr/^\s*$op_idx$del$op_msk\s*$/i;                                                   #$1:offset $2:preop $3:register $4:postop $4:mask
+*amod_idx1_msk     = \qr/^\s*$op_idx1$del$op_msk\s*$/i;                                                  #$1:offset $2:register $3:mask
+*amod_idx2_msk     = \$amod_idx1_msk;                                                                    #$1:offset $2:register $3:mask
 
-*amod_dir_msk_rel  = \qr/^\s*$op_dir$del$op_msk$del$op_rel\s*$/i;  #$1:address $2:mask $3:address
-*amod_ext_msk_rel  = \qr/^\s*$op_ext$del$op_msk$del$op_rel\s*$/i;  #$1:address $2:mask $3:address
-*amod_idx_msk_rel  = \qr/^\s*$op_idx$del$op_msk$del$op_rel\s*$/i;  #$1:offset $2:preop $3:register $4:postop $5:mask $6:address
-*amod_idx1_msk_rel = \qr/^\s*$op_idx1$del$op_msk$del$op_rel\s*$/i; #$1:offset $2:register $3:mask $4:address
+*amod_dir_msk_rel  = \qr/^\s*$op_dir$del$op_msk$del$op_rel\s*$/i;                                        #$1:address $2:mask $3:address
+*amod_ext_msk_rel  = \qr/^\s*$op_ext$del$op_msk$del$op_rel\s*$/i;                                        #$1:address $2:mask $3:address
+*amod_idx_msk_rel  = \qr/^\s*$op_idx$del$op_msk$del$op_rel\s*$/i;                                        #$1:offset $2:preop $3:register $4:postop $5:mask $6:address
+*amod_idx1_msk_rel = \qr/^\s*$op_idx1$del$op_msk$del$op_rel\s*$/i;                                       #$1:offset $2:register $3:mask $4:address
 *amod_idx2_msk_rel = \$amod_idx1_msk_rel;
 
-*amod_ext_pgimpl   = \qr/^\s*$op_ext\s*$/i;             #$1:address
-*amod_ext_pg       = \qr/^\s*$op_ext$del$op_pg\s*$/i;   #$1:address $2:page
-*amod_idx_pg       = \qr/^\s*$op_idx$del$op_pg\s*$/i;   #$1:offset $2:preop $3:register $4:postop $5:page
-*amod_idx1_pg      = \qr/^\s*$op_idx1$del$op_pg\s*$/i;  #$1:offset $2:register $3:page
+*amod_ext_pgimpl   = \qr/^\s*$op_ext\s*$/i;                                                              #$1:address
+*amod_ext_pg       = \qr/^\s*$op_ext$del$op_pg\s*$/i;                                                    #$1:address $2:page
+*amod_idx_pg       = \qr/^\s*$op_idx$del$op_pg\s*$/i;                                                    #$1:offset $2:preop $3:register $4:postop $5:page
+*amod_idx1_pg      = \qr/^\s*$op_idx1$del$op_pg\s*$/i;                                                   #$1:offset $2:register $3:page
 *amod_idx2_pg      = \$amod_idx1_pg;
 
-*amod_imm8_ext     = \qr/^\s*$op_imm$del$op_ext\s*$/i; #$1:data $2:address
-*amod_imm8_idx     = \qr/^\s*$op_imm$del$op_idx\s*$/i; #$1:data $2:offset $3:preop $4:register $5:postop
-*amod_imm16_ext    = \$amod_imm8_ext;
-*amod_imm16_idx    = \$amod_imm8_idx;
-*amod_ext_ext      = \qr/^\s*$op_ext$del$op_ext\s*$/i; #$1:address $2:address
-*amod_ext_idx      = \qr/^\s*$op_ext$del$op_idx\s*$/i; #$1:address $2:offset $3:preop $4:register $5:postop
-*amod_idx_ext      = \qr/^\s*$op_idx$del$op_ext\s*$/i; #$1:offset $1:preop $3:register $4:postop $5:address
-*amod_idx_idx      = \qr/^\s*$op_idx$del$op_idx\s*$/i; #$1:offset $2:preop $3:register $4:postop #$5:offset $6:preop $7:register $8:postop
+*amod_imm8_ext     = \qr/^\s*$op_imm$del$op_ext\s*$/i;                                                   #$1:data $2:address
+*amod_imm8_idx     = \qr/^\s*$op_imm$del$op_idx\s*$/i;                                                   #$1:data $2:offset $3:preop $4:register $5:postop
+*amod_imm16_ext    = \$amod_imm8_ext;		                                                         
+*amod_imm16_idx    = \$amod_imm8_idx;		                                                         
+*amod_ext_ext      = \qr/^\s*$op_ext$del$op_ext\s*$/i;                                                   #$1:address $2:address
+*amod_ext_idx      = \qr/^\s*$op_ext$del$op_idx\s*$/i;                                                   #$1:address $2:offset $3:preop $4:register $5:postop
+*amod_idx_ext      = \qr/^\s*$op_idx$del$op_ext\s*$/i;                                                   #$1:offset $1:preop $3:register $4:postop $5:address
+*amod_idx_idx      = \qr/^\s*$op_idx$del$op_idx\s*$/i;                                                   #$1:offset $2:preop $3:register $4:postop #$5:offset $6:preop $7:register $8:postop
 
-*amod_exg          = \qr/^\s*$op_reg_src$del$op_reg_dst\s*$/i; #$1:register $1:register
-*amod_tfr          = \$amod_exg;                           #$1:register $1:register
+*amod_exg          = \qr/^\s*$op_reg_src$del$op_reg_dst\s*$/i;                                           #$1:register $1:register
+*amod_tfr          = \$amod_exg;                                                                         #$1:register $1:register
 
-*amod_dbeq         = \qr/^\s*$op_reg_idx$del$op_rel\s*$/i;   #$1:register $1:address
+*amod_dbeq         = \qr/^\s*$op_reg_idx$del$op_rel\s*$/i;                                               #$1:register $1:address
 *amod_dbne         = \$amod_dbeq;
 *amod_tbeq         = \$amod_dbeq;
 *amod_tbne         = \$amod_dbeq;
 *amod_ibeq         = \$amod_dbeq;
 *amod_ibne         = \$amod_dbeq;
 
-*amod_trap         = \qr/^\s*$op_trap\s*$/i; #$1:value
+*amod_trap         = \qr/^\s*$op_trap\s*$/i;                                                             #$1:value
 
 #S12X address modes
 ###################
@@ -657,37 +651,37 @@ if ($^O =~ /MSWin/i) {
 *amod_s12x_dir_msk      = \$amod_dir_msk;
 *amod_s12x_dir_msk_rel  = \$amod_dir_msk_rel;
 
-*amod_imm8_idx1         = \qr/^\s*$op_imm$del$op_idx1\s*$/i; #$1:data $2:offset $3:register;
+*amod_imm8_idx1         = \qr/^\s*$op_imm$del$op_idx1\s*$/i;                                             #$1:data $2:offset $3:register;
 *amod_imm8_idx2         = \$amod_imm8_idx1;
-*amod_imm8_ididx        = \qr/^\s*$op_imm$del$op_ididx\s*$/i; #$1:data $2:register;
-*amod_imm8_iidx2        = \qr/^\s*$op_imm$del$op_iidx2\s*$/i; #$1:data $2:offset $3:register;
-*amod_imm8_iext         = \qr/^\s*$op_imm$del$op_iext\s*$/i;  #$1:data $2:address;
-
-*amod_imm16_idx1        = \$amod_imm8_idx1;
-*amod_imm16_idx2        = \$amod_imm8_idx2;
-*amod_imm16_ididx       = \$amod_imm8_ididx;
-*amod_imm16_iidx2       = \$amod_imm8_iidx2;
-*amod_imm16_iext        = \$amod_imm8_iext;
-
-*amod_ext_idx1          = \qr/^\s*$op_ext$del$op_idx1\s*$/i;  #$1:address $2:offset $3:register;
-*amod_ext_idx2          = \$amod_ext_idx1;
-*amod_ext_ididx         = \qr/^\s*$op_ext$del$op_ididx\s*$/i; #$1:address $2:register;
-*amod_ext_iidx2         = \qr/^\s*$op_ext$del$op_iidx2\s*$/i; #$1:address $2:offset $3:register;
-*amod_ext_iext          = \qr/^\s*$op_ext$del$op_iext\s*$/i;  #$1:address $2:address;
-
-*amod_idx_idx1          = \qr/^\s*$op_idx$del$op_idx1\s*$/i;  #$1:offset $2:preop $3:register $4:postop $5:offset $6:register;
-*amod_idx_idx2          = \$amod_idx_idx1;
-*amod_idx_ididx         = \qr/^\s*$op_idx$del$op_ididx\s*$/i; #$1:offset $2:preop $3:register $4:postop $5:register;
-*amod_idx_iidx2         = \qr/^\s*$op_idx$del$op_iidx2\s*$/i; #$1:offset $2:preop $3:register $4:postop $5:offset $6:register;
-*amod_idx_iext          = \qr/^\s*$op_idx$del$op_iext\s*$/i;  #$1:offset $2:preop $3:register $4:postop $5:address;
-
-*amod_idx1_ext          = \qr/^\s*$op_idx1$del$op_ext\s*$/i;  #$1:offset $2:register $3:address;
-*amod_idx1_idx          = \qr/^\s*$op_idx1$del$op_idx\s*$/i;  #$1:offset $2:register $3:offset $4:preop $5:register $6:postop;
-*amod_idx1_idx1         = \qr/^\s*$op_idx1$del$op_idx1\s*$/i; #$1:offset $2:register $3:offset $4:register;
-*amod_idx1_idx2         = \$amod_idx1_idx1;
-*amod_idx1_ididx        = \qr/^\s*$op_idx1$del$op_ididx\s*$/i;#1$:offset $2:register $3:register;
-*amod_idx1_iidx2        = \qr/^\s*$op_idx1$del$op_iidx2\s*$/i;#1$:offset $2:register $3:offset $4:register;
-*amod_idx1_iext         = \qr/^\s*$op_idx1$del$op_iext\s*$/i; #1$:offset $2:register $3:address;
+*amod_imm8_ididx        = \qr/^\s*$op_imm$del$op_ididx\s*$/i;                                            #$1:data $2:register;
+*amod_imm8_iidx2        = \qr/^\s*$op_imm$del$op_iidx2\s*$/i;                                            #$1:data $2:offset $3:register;
+*amod_imm8_iext         = \qr/^\s*$op_imm$del$op_iext\s*$/i;                                             #$1:data $2:address;
+							                                                 
+*amod_imm16_idx1        = \$amod_imm8_idx1;		                                                 
+*amod_imm16_idx2        = \$amod_imm8_idx2;		                                                 
+*amod_imm16_ididx       = \$amod_imm8_ididx;		                                                 
+*amod_imm16_iidx2       = \$amod_imm8_iidx2;		                                                 
+*amod_imm16_iext        = \$amod_imm8_iext;		                                                 
+							                                                 
+*amod_ext_idx1          = \qr/^\s*$op_ext$del$op_idx1\s*$/i;                                             #$1:address $2:offset $3:register;
+*amod_ext_idx2          = \$amod_ext_idx1;		                                                 
+*amod_ext_ididx         = \qr/^\s*$op_ext$del$op_ididx\s*$/i;                                            #$1:address $2:register;
+*amod_ext_iidx2         = \qr/^\s*$op_ext$del$op_iidx2\s*$/i;                                            #$1:address $2:offset $3:register;
+*amod_ext_iext          = \qr/^\s*$op_ext$del$op_iext\s*$/i;                                             #$1:address $2:address;
+							                                                 
+*amod_idx_idx1          = \qr/^\s*$op_idx$del$op_idx1\s*$/i;                                             #$1:offset $2:preop $3:register $4:postop $5:offset $6:register;
+*amod_idx_idx2          = \$amod_idx_idx1;		                                                 
+*amod_idx_ididx         = \qr/^\s*$op_idx$del$op_ididx\s*$/i;                                            #$1:offset $2:preop $3:register $4:postop $5:register;
+*amod_idx_iidx2         = \qr/^\s*$op_idx$del$op_iidx2\s*$/i;                                            #$1:offset $2:preop $3:register $4:postop $5:offset $6:register;
+*amod_idx_iext          = \qr/^\s*$op_idx$del$op_iext\s*$/i;                                             #$1:offset $2:preop $3:register $4:postop $5:address;
+							                                                 
+*amod_idx1_ext          = \qr/^\s*$op_idx1$del$op_ext\s*$/i;                                             #$1:offset $2:register $3:address;
+*amod_idx1_idx          = \qr/^\s*$op_idx1$del$op_idx\s*$/i;                                             #$1:offset $2:register $3:offset $4:preop $5:register $6:postop;
+*amod_idx1_idx1         = \qr/^\s*$op_idx1$del$op_idx1\s*$/i;                                            #$1:offset $2:register $3:offset $4:register;
+*amod_idx1_idx2         = \$amod_idx1_idx1;		                                                 
+*amod_idx1_ididx        = \qr/^\s*$op_idx1$del$op_ididx\s*$/i;                                           #1$:offset $2:register $3:register;
+*amod_idx1_iidx2        = \qr/^\s*$op_idx1$del$op_iidx2\s*$/i;                                           #1$:offset $2:register $3:offset $4:register;
+*amod_idx1_iext         = \qr/^\s*$op_idx1$del$op_iext\s*$/i;                                            #1$:offset $2:register $3:address;
 
 *amod_idx2_ext          = \$amod_idx1_ext;
 *amod_idx2_idx          = \$amod_idx1_idx;
@@ -697,110 +691,123 @@ if ($^O =~ /MSWin/i) {
 *amod_idx2_iidx2        = \$amod_idx1_iidx2;
 *amod_idx2_iext         = \$amod_idx1_iext;
 
-*amod_ididx_ext         = \qr/^\s*$op_ididx$del$op_ext\s*$/i;  #$1:register $2:address;
-*amod_ididx_idx         = \qr/^\s*$op_ididx$del$op_idx\s*$/i;  #$1:register $2:offset $3:preop $4:register $5:postop;
-*amod_ididx_idx1        = \qr/^\s*$op_ididx$del$op_idx1\s*$/i; #$1:register $2:offset $3:register;
-*amod_ididx_idx2        = \$amod_ididx_idx1;
-*amod_ididx_ididx       = \qr/^\s*$op_ididx$del$op_ididx\s*$/i;#$1:register $2:register;
-*amod_ididx_iidx2       = \qr/^\s*$op_ididx$del$op_iidx2\s*$/i;#$1:register $2:offset $3:register;
-*amod_ididx_iext        = \qr/^\s*$op_ididx$del$op_iext\s*$/i; #$1:register $2:address;
+*amod_ididx_ext         = \qr/^\s*$op_ididx$del$op_ext\s*$/i;                                            #$1:register $2:address;
+*amod_ididx_idx         = \qr/^\s*$op_ididx$del$op_idx\s*$/i;                                            #$1:register $2:offset $3:preop $4:register $5:postop;
+*amod_ididx_idx1        = \qr/^\s*$op_ididx$del$op_idx1\s*$/i;                                           #$1:register $2:offset $3:register;
+*amod_ididx_idx2        = \$amod_ididx_idx1;		                                                 
+*amod_ididx_ididx       = \qr/^\s*$op_ididx$del$op_ididx\s*$/i                                           #$1:register $2:register;
+*amod_ididx_iidx2       = \qr/^\s*$op_ididx$del$op_iidx2\s*$/i                                           #$1:register $2:offset $3:register;
+*amod_ididx_iext        = \qr/^\s*$op_ididx$del$op_iext\s*$/i;                                           #$1:register $2:address;
+							                                                 
+*amod_iidx2_ext         = \qr/^\s*$op_iidx2$del$op_ext\s*$/i;                                            #$1:offset $2:register $3:address;
+*amod_iidx2_idx         = \qr/^\s*$op_iidx2$del$op_idx\s*$/i;                                            #$1:offset $2:register $3:offset $4:preop $5:register $6:postop;
+*amod_iidx2_idx1        = \qr/^\s*$op_iidx2$del$op_idx1\s*$/i;                                           #$1:offset $2:register $3:offset $4:register;
+*amod_iidx2_idx2        = \$amod_iidx2_idx1;		                                                 
+*amod_iidx2_ididx       = \qr/^\s*$op_iidx2$del$op_ididx\s*$/i                                           #$1:offset $2:register $3:register;
+*amod_iidx2_iidx2       = \qr/^\s*$op_iidx2$del$op_iidx2\s*$/i                                           #$1:offset $2:register $3:offset $4:register;
+*amod_iidx2_iext        = \qr/^\s*$op_iidx2$del$op_iext\s*$/i;                                           #$1:offset $2:register $3:address;
+							                                                 
+*amod_iext_ext          = \qr/^\s*$op_iext$del$op_ext\s*$/i;                                             #$1:address $2:address;
+*amod_iext_idx          = \qr/^\s*$op_iext$del$op_idx\s*$/i;                                             #$1:address $2:offset $3:preop $4:register $5:postop;
+*amod_iext_idx1         = \qr/^\s*$op_iext$del$op_idx1\s*$/i;                                            #$1:address $2:offset $3:register;
+*amod_iext_idx2         = \$amod_iext_idx1;		                                                 
+*amod_iext_ididx        = \qr/^\s*$op_iext$del$op_ididx\s*$/i;                                           #$1:address $2:register;
+*amod_iext_iidx2        = \qr/^\s*$op_iext$del$op_iidx2\s*$/i;                                           #$1:address $2:offset $3:register;
+*amod_iext_iext         = \qr/^\s*$op_iext$del$op_iext\s*$/i;                                            #$1:address $2:address;
 
-*amod_iidx2_ext         = \qr/^\s*$op_iidx2$del$op_ext\s*$/i;  #$1:offset $2:register $3:address;
-*amod_iidx2_idx         = \qr/^\s*$op_iidx2$del$op_idx\s*$/i;  #$1:offset $2:register $3:offset $4:preop $5:register $6:postop;
-*amod_iidx2_idx1        = \qr/^\s*$op_iidx2$del$op_idx1\s*$/i; #$1:offset $2:register $3:offset $4:register;
-*amod_iidx2_idx2        = \$amod_iidx2_idx1;
-*amod_iidx2_ididx       = \qr/^\s*$op_iidx2$del$op_ididx\s*$/i;#$1:offset $2:register $3:register;
-*amod_iidx2_iidx2       = \qr/^\s*$op_iidx2$del$op_iidx2\s*$/i;#$1:offset $2:register $3:offset $4:register;
-*amod_iidx2_iext        = \qr/^\s*$op_iidx2$del$op_iext\s*$/i; #$1:offset $2:register $3:address;
-
-*amod_iext_ext          = \qr/^\s*$op_iext$del$op_ext\s*$/i;  #$1:address $2:address;
-*amod_iext_idx          = \qr/^\s*$op_iext$del$op_idx\s*$/i;  #$1:address $2:offset $3:preop $4:register $5:postop;
-*amod_iext_idx1         = \qr/^\s*$op_iext$del$op_idx1\s*$/i; #$1:address $2:offset $3:register;
-*amod_iext_idx2         = \$amod_iext_idx1;
-*amod_iext_ididx        = \qr/^\s*$op_iext$del$op_ididx\s*$/i;#$1:address $2:register;
-*amod_iext_iidx2        = \qr/^\s*$op_iext$del$op_iidx2\s*$/i;#$1:address $2:offset $3:register;
-*amod_iext_iext         = \qr/^\s*$op_iext$del$op_iext\s*$/i; #$1:address $2:address;
-
-*amod_s12x_exg          = \qr/^\s*$op_s12x_reg_src$del$op_s12x_reg_dst\s*$/i; #$1:register $1:register
-*amod_s12x_tfr          = \$amod_s12x_exg;                                    #$1:register $1:register
+*amod_s12x_exg          = \qr/^\s*$op_s12x_reg_src$del$op_s12x_reg_dst\s*$/i;                            #$1:register $1:register
+*amod_s12x_tfr          = \$amod_s12x_exg;                                                               #$1:register $1:register
 
 *amod_s12x_trap         = \$amod_trap;
 
 #S12Z address modes
 ###################
+*amod_s12z_dn           = \qr/^\s*$op_s12z_d\s*$/i;                                                         #$1:register
+*amod_s12z_tb           = \qr/^\s*$op_s12z_tb\s*$/i;                                                         #$1:register
 
-
-
-
-
-
-
-*amod_s12z_xy             = \qr/^\s*$op_s12z_xy\s*$/i;                                                            #$1:register
-*amod_s12z_s              = \qr/^\s*$op_s12z_s\s*$/i;                                                             #$1:register
-*amod_s12z_dreg           = \qr/^\s*$op_s12z_dreg\s*$/i;                                                          #$1:register
-*amod_s12z_d67            = \qr/^\s*$op_s12z_d67\s*$/i;                                                           #$1:register
-*amod_s12z_imm            = \qr/^\s*$op_s12z_imm\s*$/i;                                                           #$1:value
-*amod_s12z_dreg           = \qr/^\s*$op_s12z_dreg\s*$/i;                                                          #$1:register
-*amod_s12z_idxxys         = \qr/^\s*$op_s12z_idxxys\s*$/i;                                                        #$1:offset$  $2:register
-*amod_s12z_incidx         = \qr/^\s*$op_s12z_incidx\s*$/i;                                                        #$1:preop    $2:register $3:postop
-*amod_s12z_idxdoffs       = \qr/^\s*$op_s12z_idxdoffs\s*$/i;                                                      #$1:register $2:register
-*amod_s12z_iidxdoffs      = \qr/^\s*$op_s12z_iidxdoffs\s*$/i;                                                     #$1:register $2:register
-*amod_s12z_idxxysp        = \qr/^\s*$op_s12z_idxxysp\s*$/i;                                                       #$1:offset   $2:register
-*amod_s12z_iidxxysp       = \qr/^\s*$op_s12z_iidxxysp\s*$/i;                                                      #$1:offset   $2:register
-*amod_s12z_idxdreg        = \qr/^\s*$op_s12z_idxdreg\s*$/i;                                                       #$1:offset   $2:register
-*amod_s12z_ext            = \qr/^\s*$op_s12z_ext\s*$/i;                                                           #$1:offset
-*amod_s12z_iext           = \qr/^\s*$op_s12z_iext\s*$/i;                                                           #$1:offset
-*amod_s12z_dreg_imm       = \qr/^\s*$op_s12z_dreg$del$op_s12z_imm\s*$/i;                                          #$1:register $2:value
-*amod_s12z_dreg_dreg      = \qr/^\s*$op_s12z_dreg$del$op_s12z_dreg\s*$/i;                                         #$1:register $2:register
-*amod_s12z_dreg_idxxys    = \qr/^\s*$op_s12z_dreg$del$op_s12z_idxxys\s*$/i;                                       #$1:register $2:offset$  $3:register
-*amod_s12z_dreg_incidx    = \qr/^\s*$op_s12z_dreg$del$op_s12z_incidx\s*$/i;                                       #$1:register $2:preop    $3:register $4:postop
-*amod_s12z_dreg_idxdoffs  = \qr/^\s*$op_s12z_dreg$del$op_s12z_idxdoffs\s*$/i;                                     #$1:register $2:register $3:register
-*amod_s12z_dreg_iidxdoffs = \qr/^\s*$op_s12z_dreg$del$op_s12z_iidxdoffs\s*$/i;                                    #$1:register $2:register $3:register
-*amod_s12z_dreg_idxxysp   = \qr/^\s*$op_s12z_dreg$del$op_s12z_idxxysp\s*$/i;                                      #$1:register $2:offset   $3:register
-*amod_s12z_dreg_iidxxysp  = \qr/^\s*$op_s12z_dreg$del$op_s12z_iidxxysp\s*$/i;                                     #$1:register $2:offset   $3:register
-*amod_s12z_dreg_idxdreg   = \qr/^\s*$op_s12z_dreg$del$op_s12z_idxdreg\s*$/i;                                      #$1:register $2:offset   $3:register
-*amod_s12z_dreg_ext       = \qr/^\s*$op_s12z_dreg$del$op_s12z_ext\s*$/i;                                          #$1:register $2:offset
-*amod_s12z_dreg_iext      = \qr/^\s*$op_s12z_dreg$del$op_s12z_iext\s*$/i;                                          #$1:register $2:offset
-*amod_s12z_xy_imm         = \qr/^\s*$op_s12z_xy$del$op_s12z_imm\s*$/i;                                            #$1:register $2:value
-*amod_s12z_xy_dreg        = \qr/^\s*$op_s12z_xy$del$op_s12z_dreg\s*$/i;                                           #$1:register $2:register
-*amod_s12z_xy_idxxys      = \qr/^\s*$op_s12z_xy$del$op_s12z_idxxys\s*$/i;                                         #$1:register $2:offset$  $3:register
-*amod_s12z_xy_incidx      = \qr/^\s*$op_s12z_xy$del$op_s12z_incidx\s*$/i;                                         #$1:register $2:preop    $3:register $4:postop
-*amod_s12z_xy_idxdoffs    = \qr/^\s*$op_s12z_xy$del$op_s12z_idxdoffs\s*$/i;                                       #$1:register $2:register $3:register
-*amod_s12z_xy_iidxdoffs   = \qr/^\s*$op_s12z_xy$del$op_s12z_iidxdoffs\s*$/i;                                      #$1:register $2:register $3:register
-*amod_s12z_xy_idxxysp     = \qr/^\s*$op_s12z_xy$del$op_s12z_idxxysp\s*$/i;                                        #$1:register $2:offset   $3:register
-*amod_s12z_xy_iidxxysp    = \qr/^\s*$op_s12z_xy$del$op_s12z_iidxxysp\s*$/i;                                       #$1:register $2:offset   $3:register
-*amod_s12z_xy_idxdreg     = \qr/^\s*$op_s12z_xy$del$op_s12z_idxdreg\s*$/i;                                        #$1:register $2:offset   $3:register
-*amod_s12z_xy_ext         = \qr/^\s*$op_s12z_xy$del$op_s12z_ext\s*$/i;                                            #$1:register $2:offset
-*amod_s12z_xy_iext        = \qr/^\s*$op_s12z_xy$del$op_s12z_iext\s*$/i;                                           #$1:register $2:offset
-*amod_s12z_s_dreg         = \qr/^\s*$op_s12z_s$del$op_s12z_dreg\s*$/i;                                            #$1:register
-*amod_s12z_s_idxxys       = \qr/^\s*$op_s12z_s$del$op_s12z_idxxys\s*$/i;                                          #$1:offset$  $2:register
-*amod_s12z_s_incidx       = \qr/^\s*$op_s12z_s$del$op_s12z_incidx\s*$/i;                                          #$1:preop    $2:register $3:postop
-*amod_s12z_s_idxdoffs     = \qr/^\s*$op_s12z_s$del$op_s12z_idxdoffs\s*$/i;                                        #$1:register $2:register
-*amod_s12z_s_iidxdoffs    = \qr/^\s*$op_s12z_s$del$op_s12z_iidxdoffs\s*$/i;                                       #$1:register $2:register
-*amod_s12z_s_idxxysp      = \qr/^\s*$op_s12z_s$del$op_s12z_idxxysp\s*$/i;                                         #$1:offset   $2:register
-*amod_s12z_s_iidxxysp     = \qr/^\s*$op_s12z_s$del$op_s12z_iidxxysp\s*$/i;                                        #$1:offset   $2:register
-*amod_s12z_s_idxdreg      = \qr/^\s*$op_s12z_s$del$op_s12z_idxdreg\s*$/i;                                         #$1:offset   $2:register
-*amod_s12z_s_ext          = \qr/^\s*$op_s12z_s$del$op_s12z_ext\s*$/i;                                             #$1:offset
-*amod_s12z_s_iext         = \qr/^\s*$op_s12z_s$del$op_s12z_iext\s*$/i;                                            #$1:offset
-*amod_s12z_imm_ext        = \qr/^\s*$op_s12z_imm$del$op_s12z_ext\s*$/i;                                           #$1:value    $2:register 
-*amod_s12z_idxxys_ext     = \qr/^\s*$op_s12z_idxxys$del$op_s12z_ext\s*$/i;                                        #$1:offset$  $2:register $3:register 
-*amod_s12z_incidx_ext     = \qr/^\s*$op_s12z_incidx$del$op_s12z_ext\s*$/i;                                        #$1:preop    $2:register $3:postop   $4:register 
-*amod_s12z_idxdoffs_ext   = \qr/^\s*$op_s12z_idxdoffs$del$op_s12z_ext\s*$/i;                                      #$1:register $2:register $3:register 
-*amod_s12z_iidxdoffs_ext  = \qr/^\s*$op_s12z_iidxdoffs$del$op_s12z_ext\s*$/i;                                     #$1:register $2:register $3:register 
-*amod_s12z_idxxysp_ext    = \qr/^\s*$op_s12z_idxxysp$del$op_s12z_ext\s*$/i;                                       #$1:offset   $2:register $3:register 
-*amod_s12z_iidxxysp_ext   = \qr/^\s*$op_s12z_iidxxysp$del$op_s12z_ext\s*$/i;                                      #$1:offset   $2:register $3:register 
-*amod_s12z_idxdreg_ext    = \qr/^\s*$op_s12z_idxdreg$del$op_s12z_ext\s*$/i;                                       #$1:offset   $2:register $3:register 
-*amod_s12z_ext_ext        = \qr/^\s*$op_s12z_ext$del$op_s12z_ext\s*$/i;                                           #$1:offset   $2:register 
-*amod_s12z_iext_ext       = \qr/^\s*$op_s12z_iext$del$op_s12z_ext\s*$/i;                                          #$1:offset   $2:register 
-*amod_s12z_rel            = \qr/^\s*$op_s12z_rel\s*$/i;                                                           #$1:value
-*amod_s12z_dreg_dreg_dreg = \qr/^\s*$op_s12z_dreg$del$op_s12z_dreg$del$op_s12z_dreg\s*$/i;                        #$1:register $2:register $3:register
-*amod_s12z_reg_reg        = \qr/^\s*$op_s12z_reg$del$op_s12z_reg\s*$/i;                                           #$1:register $2:register
-*amod_s12z_psh            = \qr/^\s*$op_s12z_pshreg$op_s12z_pshreg_del*\s*$/i;                                    #$1...$n:register
-
-
-
-
-
+#*amod_s12z_dn           = \qr/($op_s12z_np_d)/i;                                                         #$1:register
+#*amod_s12z_dp_imm       = \qr/($op_s12z_np_d)$del($op_s12z_np_imm)/i;                                    #$1:register $2:imm
+#*amod_s12z_dn_xb        = \qr/($op_s12z_np_d)$del($op_s12z_np_xb)/i;                                     #$1:register $2:xb
+#*amod_s12z_imm          = \qr/($op_s12z_np_imm)/i;                                                       #$1:imm
+#*amod_s12z_dn_sb        = \qr/($op_s12z_np_d)$del($op_s12z_np_sb)/i;                                     #$1:register $2:sb
+#*amod_s12z_rb           = \qr/($op_s12z_np_ext)/i;                                                       #$1:rb
+#
+#*amod_s12z_ext          = \qr/$op_s12z_ext/i;                                                            #$1:value
+#*amod_s12z_rel          = \$amod_s12z_ext;                                                               #$1:value
+#*amod_s12z_xb           = \qr/($op_s12z_np_xb)/i;                                                        #$1:args
+#
+#*amod_s12z_xb           = \qr/($op_s12z_np_xb)/i;                                                        #$1:args
+#
+#*amod_s12z_mb           = 
+#*amod_s12z_lb           = 
+#*amod_s12z_sb           = 
+#*amod_s12z_bm           = 
+#*amod_s12z_tb           = \qr/$op_s12z_dxyc$del$op_s12z_dxyc/i;                  #$1:register $2:register
+#*amod_s12z_eb           = $amod_s12z_tb                                          #$1:register $2:register
+#*amod_s12z_cb           = \qr/$op_s12z_d$del$op_s12z_d/i;                        #$1:register $2:register
+#*amod_s12z_pb           = \qr/$op_s12z_all|$op_s12z_all16b|$op_s12z_dxyc_list/i; #$1:register list
+#
+#*amod_s12z_xy             = \qr/^\s*$op_s12z_xy\s*$/i;                                                            #$1:register
+#*amod_s12z_s              = \qr/^\s*$op_s12z_s\s*$/i;                                                             #$1:register
+#*amod_s12z_dreg           = \qr/^\s*$op_s12z_dreg\s*$/i;                                                          #$1:register
+#*amod_s12z_d67            = \qr/^\s*$op_s12z_d67\s*$/i;                                                           #$1:register
+#*amod_s12z_imm            = \qr/^\s*$op_s12z_imm\s*$/i;                                                           #$1:value
+#*amod_s12z_dreg           = \qr/^\s*$op_s12z_dreg\s*$/i;                                                          #$1:register
+#*amod_s12z_idxxys         = \qr/^\s*$op_s12z_idxxys\s*$/i;                                                        #$1:offset$  $2:register
+#*amod_s12z_incidx         = \qr/^\s*$op_s12z_incidx\s*$/i;                                                        #$1:preop    $2:register $3:postop
+#*amod_s12z_idxdoffs       = \qr/^\s*$op_s12z_idxdoffs\s*$/i;                                                      #$1:register $2:register
+#*amod_s12z_iidxdoffs      = \qr/^\s*$op_s12z_iidxdoffs\s*$/i;                                                     #$1:register $2:register
+#*amod_s12z_idxxysp        = \qr/^\s*$op_s12z_idxxysp\s*$/i;                                                       #$1:offset   $2:register
+#*amod_s12z_iidxxysp       = \qr/^\s*$op_s12z_iidxxysp\s*$/i;                                                      #$1:offset   $2:register
+#*amod_s12z_idxdreg        = \qr/^\s*$op_s12z_idxdreg\s*$/i;                                                       #$1:offset   $2:register
+#*amod_s12z_ext            = \qr/^\s*$op_s12z_ext\s*$/i;                                                           #$1:offset
+#*amod_s12z_iext           = \qr/^\s*$op_s12z_iext\s*$/i;                                                           #$1:offset
+#*amod_s12z_dreg_imm       = \qr/^\s*$op_s12z_dreg$del$op_s12z_imm\s*$/i;                                          #$1:register $2:value
+#*amod_s12z_dreg_dreg      = \qr/^\s*$op_s12z_dreg$del$op_s12z_dreg\s*$/i;                                         #$1:register $2:register
+#*amod_s12z_dreg_idxxys    = \qr/^\s*$op_s12z_dreg$del$op_s12z_idxxys\s*$/i;                                       #$1:register $2:offset$  $3:register
+#*amod_s12z_dreg_incidx    = \qr/^\s*$op_s12z_dreg$del$op_s12z_incidx\s*$/i;                                       #$1:register $2:preop    $3:register $4:postop
+#*amod_s12z_dreg_idxdoffs  = \qr/^\s*$op_s12z_dreg$del$op_s12z_idxdoffs\s*$/i;                                     #$1:register $2:register $3:register
+#*amod_s12z_dreg_iidxdoffs = \qr/^\s*$op_s12z_dreg$del$op_s12z_iidxdoffs\s*$/i;                                    #$1:register $2:register $3:register
+#*amod_s12z_dreg_idxxysp   = \qr/^\s*$op_s12z_dreg$del$op_s12z_idxxysp\s*$/i;                                      #$1:register $2:offset   $3:register
+#*amod_s12z_dreg_iidxxysp  = \qr/^\s*$op_s12z_dreg$del$op_s12z_iidxxysp\s*$/i;                                     #$1:register $2:offset   $3:register
+#*amod_s12z_dreg_idxdreg   = \qr/^\s*$op_s12z_dreg$del$op_s12z_idxdreg\s*$/i;                                      #$1:register $2:offset   $3:register
+#*amod_s12z_dreg_ext       = \qr/^\s*$op_s12z_dreg$del$op_s12z_ext\s*$/i;                                          #$1:register $2:offset
+#*amod_s12z_dreg_iext      = \qr/^\s*$op_s12z_dreg$del$op_s12z_iext\s*$/i;                                          #$1:register $2:offset
+#*amod_s12z_xy_imm         = \qr/^\s*$op_s12z_xy$del$op_s12z_imm\s*$/i;                                            #$1:register $2:value
+#*amod_s12z_xy_dreg        = \qr/^\s*$op_s12z_xy$del$op_s12z_dreg\s*$/i;                                           #$1:register $2:register
+#*amod_s12z_xy_idxxys      = \qr/^\s*$op_s12z_xy$del$op_s12z_idxxys\s*$/i;                                         #$1:register $2:offset$  $3:register
+#*amod_s12z_xy_incidx      = \qr/^\s*$op_s12z_xy$del$op_s12z_incidx\s*$/i;                                         #$1:register $2:preop    $3:register $4:postop
+#*amod_s12z_xy_idxdoffs    = \qr/^\s*$op_s12z_xy$del$op_s12z_idxdoffs\s*$/i;                                       #$1:register $2:register $3:register
+#*amod_s12z_xy_iidxdoffs   = \qr/^\s*$op_s12z_xy$del$op_s12z_iidxdoffs\s*$/i;                                      #$1:register $2:register $3:register
+#*amod_s12z_xy_idxxysp     = \qr/^\s*$op_s12z_xy$del$op_s12z_idxxysp\s*$/i;                                        #$1:register $2:offset   $3:register
+#*amod_s12z_xy_iidxxysp    = \qr/^\s*$op_s12z_xy$del$op_s12z_iidxxysp\s*$/i;                                       #$1:register $2:offset   $3:register
+#*amod_s12z_xy_idxdreg     = \qr/^\s*$op_s12z_xy$del$op_s12z_idxdreg\s*$/i;                                        #$1:register $2:offset   $3:register
+#*amod_s12z_xy_ext         = \qr/^\s*$op_s12z_xy$del$op_s12z_ext\s*$/i;                                            #$1:register $2:offset
+#*amod_s12z_xy_iext        = \qr/^\s*$op_s12z_xy$del$op_s12z_iext\s*$/i;                                           #$1:register $2:offset
+#*amod_s12z_s_dreg         = \qr/^\s*$op_s12z_s$del$op_s12z_dreg\s*$/i;                                            #$1:register
+#*amod_s12z_s_idxxys       = \qr/^\s*$op_s12z_s$del$op_s12z_idxxys\s*$/i;                                          #$1:offset$  $2:register
+#*amod_s12z_s_incidx       = \qr/^\s*$op_s12z_s$del$op_s12z_incidx\s*$/i;                                          #$1:preop    $2:register $3:postop
+#*amod_s12z_s_idxdoffs     = \qr/^\s*$op_s12z_s$del$op_s12z_idxdoffs\s*$/i;                                        #$1:register $2:register
+#*amod_s12z_s_iidxdoffs    = \qr/^\s*$op_s12z_s$del$op_s12z_iidxdoffs\s*$/i;                                       #$1:register $2:register
+#*amod_s12z_s_idxxysp      = \qr/^\s*$op_s12z_s$del$op_s12z_idxxysp\s*$/i;                                         #$1:offset   $2:register
+#*amod_s12z_s_iidxxysp     = \qr/^\s*$op_s12z_s$del$op_s12z_iidxxysp\s*$/i;                                        #$1:offset   $2:register
+#*amod_s12z_s_idxdreg      = \qr/^\s*$op_s12z_s$del$op_s12z_idxdreg\s*$/i;                                         #$1:offset   $2:register
+#*amod_s12z_s_ext          = \qr/^\s*$op_s12z_s$del$op_s12z_ext\s*$/i;                                             #$1:offset
+#*amod_s12z_s_iext         = \qr/^\s*$op_s12z_s$del$op_s12z_iext\s*$/i;                                            #$1:offset
+#*amod_s12z_imm_ext        = \qr/^\s*$op_s12z_imm$del$op_s12z_ext\s*$/i;                                           #$1:value    $2:register 
+#*amod_s12z_idxxys_ext     = \qr/^\s*$op_s12z_idxxys$del$op_s12z_ext\s*$/i;                                        #$1:offset$  $2:register $3:register 
+#*amod_s12z_incidx_ext     = \qr/^\s*$op_s12z_incidx$del$op_s12z_ext\s*$/i;                                        #$1:preop    $2:register $3:postop   $4:register 
+#*amod_s12z_idxdoffs_ext   = \qr/^\s*$op_s12z_idxdoffs$del$op_s12z_ext\s*$/i;                                      #$1:register $2:register $3:register 
+#*amod_s12z_iidxdoffs_ext  = \qr/^\s*$op_s12z_iidxdoffs$del$op_s12z_ext\s*$/i;                                     #$1:register $2:register $3:register 
+#*amod_s12z_idxxysp_ext    = \qr/^\s*$op_s12z_idxxysp$del$op_s12z_ext\s*$/i;                                       #$1:offset   $2:register $3:register 
+#*amod_s12z_iidxxysp_ext   = \qr/^\s*$op_s12z_iidxxysp$del$op_s12z_ext\s*$/i;                                      #$1:offset   $2:register $3:register 
+#*amod_s12z_idxdreg_ext    = \qr/^\s*$op_s12z_idxdreg$del$op_s12z_ext\s*$/i;                                       #$1:offset   $2:register $3:register 
+#*amod_s12z_ext_ext        = \qr/^\s*$op_s12z_ext$del$op_s12z_ext\s*$/i;                                           #$1:offset   $2:register 
+#*amod_s12z_iext_ext       = \qr/^\s*$op_s12z_iext$del$op_s12z_ext\s*$/i;                                          #$1:offset   $2:register 
+#*amod_s12z_rel            = \qr/^\s*$op_s12z_rel\s*$/i;                                                           #$1:value
+#*amod_s12z_dreg_dreg_dreg = \qr/^\s*$op_s12z_dreg$del$op_s12z_dreg$del$op_s12z_dreg\s*$/i;                        #$1:register $2:register $3:register
+#*amod_s12z_reg_reg        = \qr/^\s*$op_s12z_reg$del$op_s12z_reg\s*$/i;                                           #$1:register $2:register
+#*amod_s12z_psh            = \qr/^\s*$op_s12z_pshreg$op_s12z_pshreg_del*\s*$/i;                                    #$1...$n:register
 
 #HC11 address modes
 ###################
@@ -3104,1413 +3111,1378 @@ if ($^O =~ /MSWin/i) {
                  "XGDY"   => [[$amod_inh,               \&check_inh,                    "B7 C6"]]};#INH
 
 #S12Z:           MNEMONIC     ADDRESS MODE                                               OPCODE
-*opctab_s12z = \{"ABS"     => [[$amod_s12z_dreg,           \&check_s12z_dreg,               "1B 40"]],
-                 "ADC"     => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,         "1B 60"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,           "1B 50"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,       "1B 60"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,         "1B 60"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,        "1B 60"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,      "1B 60"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,     "1B 60"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,         "1B 60"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,        "1B 60"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,        "1B 60"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18     "1B 60"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,        "1B 60"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,       "1B 60"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,        "1B 60"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,         "1B 60"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,       "1B 60"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24      "1B 60"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,         "1B 60"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,        "1B 60"]],
-                 "ADD"     => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,            "60"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,              "50"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,          "60"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,            "60"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,           "60"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,         "60"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,        "60"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,            "60"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,           "60"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,           "60"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18        "60"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,           "60"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,          "60"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,           "60"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,            "60"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,          "60"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24         "60"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,            "60"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,           "60"]],
-                 "AND"     => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,            "68"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,              "58"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,          "68"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,            "68"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,           "68"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,         "68"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,        "68"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,            "68"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,           "68"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,           "68"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18        "68"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,           "68"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,          "68"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,           "68"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,            "68"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,          "68"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24         "68"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,            "68"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,           "68"]],
-                 "ANDCC"   => [[$amod_s12z_imm,            \&check_s12z_imm8,                  "CE"]],
-                 "ASL"     => [],
-                 "ASL.B"   => [],
-                 "ASL.W"   => [],
-                 "ASL.P"   => [],
-                 "ASL.L"   => [],
-                 "ASR"     => [],
-                 "ASR.B"   => [],
-                 "ASR.W"   => [],
-                 "ASR.P"   => [],
-                 "ASR.L"   => [],
-                 "BCC"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "24"]],
-                 "BCLR"    => [],
-                 "BCLR.B"  => [],
-                 "BCLR.W"  => [],
-                 "BCLR.L"  => [],
-                 "BCS"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "25"]],
-                 "BEQ"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "27"]],
-                 "BFEXT"   => [[$amod_s12z_dreg_dreg_dreg, \&check_s12z_dreg_dreg_dreg,  "1B 08 00"]
-			       [                                                                   ]],
-                 "BFEXT.B" => [],
-                 "BFEXT.W" => [],
-                 "BFEXT.P" => [],
-                 "BFEXT.L" => [],
-                 "BFINS"   => [],
-                 "BFINS.B" => [],
-                 "BFINS.W" => [],
-                 "BFINS.P" => [],
-                 "BFINS.L" => [],
-                 "BGE"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "2C"]],
-                 "BGND"    => [[$amod_inh,                 \&check_inh,                        "00"]],
-                 "BGT"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "2E"]],
-                 "BHI"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "22"]],
-                 "BHS"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "24"]],
-                 "BIT"     => [[$amod_s12z_dreg_imm        \&check_s12z_dreg_immu4,         "1B 68"],
-                               [$amod_s12z_dreg_imm        \&check_s12z_dreg_imm,           "1B 58"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,       "1B 68"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,         "1B 68"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,        "1B 68"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,      "1B 68"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,     "1B 68"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,         "1B 68"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,        "1B 68"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,        "1B 68"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18     "1B 68"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,        "1B 68"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,       "1B 68"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,        "1B 68"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,         "1B 68"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,       "1B 68"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24      "1B 68"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,         "1B 68"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,        "1B 68"]],
-                 "BLE"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "2F"]],
-                 "BLO"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "25"]],
-                 "BLS"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "23"]],
-                 "BLT"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "2D"]],
-                 "BMI"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "2B"]],
-                 "BNE"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "26"]],
-                 "BPL"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "2A"]],
-                 "BRA"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "20"]],
-                 "BRCLR"   => [],
-                 "BRCLR.B" => [],
-                 "BRCLR.W" => [],
-                 "BRCLR.L" => [],
-                 "BRSET"   => [],
-                 "BRSET.B" => [],
-                 "BRSET.W" => [],
-                 "BRSET.L" => [],
-                 "BSR"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "21"]],
-                 "BTGL"    => [],			   
-                 "BTGL.B"  => [],			   
-                 "BTGL.W"  => [],			   
-                 "BTGL.L"  => [],			   
-                 "BVC"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "29"]],
-                 "BVS"     => [[$amod_s12z_rel,            \&check_s12z_rel,                   "28"]],
-                 "CLB"     => [],			   
-                 "CLC"     => [[$amod_inh,                 \&check_inh,                     "CE FE"]],
-                 "CLI"     => [[$amod_inh,                 \&check_inh,                     "CE EF"]],
-                 "CLR"     => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "38"],
-                               [$amod_s12z_xy,             \&check_s12z_xy,                    "5A"]],                                                                  ]],
-                 "CLR.B"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "38"],
-                               [$amod_s12z_xy,             \&check_s12z_xy,                    "5A"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "BC"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "BC"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "BC"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "BC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "BC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "BC"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "BC"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "BC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "BC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "BC"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "BC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "BC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "BC"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "BC"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "BC"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "BC"]],
-                 "CLR.W"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "38"],
-                               [$amod_s12z_xy,             \&check_s12z_xy,                    "5A"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "BD"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "BD"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "BD"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "BD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "BD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "BD"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "BD"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "BD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "BD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "BD"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "BD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "BD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "BD"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "BD"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "BD"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "BD"]],
-                 "CLR.P"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "38"],
-                               [$amod_s12z_xy,             \&check_s12z_xy,                    "5A"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "BE"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "BE"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "BE"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "BE"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "BE"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "BE"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "BE"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "BE"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "BE"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "BE"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "BE"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "BE"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "BE"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "BE"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "BE"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "BE"]],
-                 "CLR.L"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "38"],
-                               [$amod_s12z_xy,             \&check_s12z_xy,                    "5A"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "BF"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "BF"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "BF"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "BF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "BF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "BF"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "BF"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "BF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "BF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "BF"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "BF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "BF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "BF"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "BF"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "BF"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "BF"]],
-                 "CLV"     => [[$amod_inh,                 \&check_inh,                     "CE FD"]],
-                 "CMP"     => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,            "F0"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,              "E0"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,          "F0"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,            "F0"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,           "F0"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,         "F0"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,        "F0"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,            "F0"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,           "F0"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,           "F0"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18        "F0"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,           "F0"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,          "F0"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,           "F0"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,            "F0"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,          "F0"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24         "F0"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,            "F0"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,           "F0"]],
-                 "COM"     => [[$amod_s12z_dreg,           \&check_s12z_dregopr,               "CF"]],
-                 "COM.B"   => [[$amod_s12z_dreg,           \&check_s12z_dregopr,               "CC"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "CC"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "CC"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "CC"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "CC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "CC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "CC"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "CC"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "CC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "CC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "CC"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "CC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "CC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "CC"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "CC"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "CC"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "CC"]],
-                 "COM.W"   => [[$amod_s12z_dreg,           \&check_s12z_dregopr,               "CD"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "CD"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "CD"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "CD"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "CD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "CD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "CD"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "CD"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "CD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "CD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "CD"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "CD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "CD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "CD"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "CD"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "CD"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "CD"]],
-                 "COM.L"   => [[$amod_s12z_dreg,           \&check_s12z_dregopr,               "CF"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "CF"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "CF"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "CF"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "CF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "CF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "CF"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "CF"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "CF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "CF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "CF"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "CF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "CF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "CF"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "CF"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "CF"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "CF"],
-                 "DBNE"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B 80"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B 88"]],
-                 "DBNE.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 8C"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 8C"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 8C"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 8C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 8C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 8C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 8C"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 8C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 8C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 8C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 8C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 8C"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 8C"]],			   				    
-                 "DBNE.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 8D"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 8D"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 8D"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 8D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 8D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 8D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 8D"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 8D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 8D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 8D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 8D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 8D"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 8D"]],			   				    
-                 "DBNE.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 8E"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 8E"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 8E"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 8E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 8E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 8E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 8E"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 8E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 8E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 8E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 8E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 8E"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 8E"]],			   				    
-                 "DBNE.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 8F"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 8F"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 8F"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 8F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 8F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 8F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 8F"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 8F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 8F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 8F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 8F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 8F"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 8F"]],			   				    
-                 "DBEQ"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B 90"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B 98"]],
-                 "DBEQ.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 9C"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 9C"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 9C"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 9C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 9C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 9C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 9C"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 9C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 9C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 9C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 9C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 9C"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 9C"]],			   				    
-                 "DBEQ.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 9D"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 9D"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 9D"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 9D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 9D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 9D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 9D"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 9D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 9D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 9D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 9D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 9D"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 9D"]],			   				    
-                 "DBEQ.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 9E"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 9E"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 9E"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 9E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 9E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 9E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 9E"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 9E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 9E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 9E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 9E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 9E"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 9E"]],			   				    
-                 "DBEQ.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 9F"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 9F"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 9F"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 9F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 9F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 9F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 9F"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 9F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 9F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 9F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 9F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 9F"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 9F"]],			   				    
-                 "DBPL"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B A0"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B A8"]],
-                 "DBPL.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B AC"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B AC"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B AC"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B AC"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B AC"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B AC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B AC"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B AC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B AC"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B AC"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B AC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B AC"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B AC"]],			   				    
-                 "DBPL.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B AD"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B AD"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B AD"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B AD"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B AD"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B AD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B AD"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B AD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B AD"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B AD"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B AD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B AD"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B AD"]],			   				    
-                 "DBPL.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B AE"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B AE"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B AE"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B AE"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B AE"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B AE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B AE"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B AE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B AE"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B AE"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B AE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B AE"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B AE"]],			   				    
-                 "DBPL.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B AF"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B AF"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B AF"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B AF"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B AF"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B AF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B AF"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B AF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B AF"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B AF"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B AF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B AF"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B AF"]],			   				    
-                 "DBMI"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B B0"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B B8"]],
-                 "DBMI.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B BC"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B BC"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B BC"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B BC"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B BC"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B BC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B BC"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B BC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B BC"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B BC"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B BC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B BC"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B BC"]],			   				    
-                 "DBMI.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B BD"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B BD"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B BD"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B BD"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B BD"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B BD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B BD"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B BD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B BD"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B BD"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B BD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B BD"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B BD"]],			   				    
-                 "DBMI.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B BE"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B BE"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B BE"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B BE"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B BE"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B BE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B BE"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B BE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B BE"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B BE"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B BE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B BE"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B BE"]],			   				    
-                 "DBMI.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B BF"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B BF"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B BF"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B BF"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B BF"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B BF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B BF"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B BF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B BF"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B BF"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B BF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B BF"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B BF"]],			   				    
-                 "DBGT"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B C0"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B C8"]],
-                 "DBGT.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B CC"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B CC"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B CC"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B CC"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B CC"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B CC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B CC"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B CC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B CC"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B CC"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B CC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B CC"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B CC"]],			   				    
-                 "DBGT.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B CD"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B CD"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B CD"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B CD"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B CD"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B CD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B CD"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B CD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B CD"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B CD"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B CD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B CD"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B CD"]],			   				    
-                 "DBGT.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B CE"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B CE"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B CE"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B CE"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B CE"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B CE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B CE"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B CE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B CE"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B CE"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B CE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B CE"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B CE"]],			   				    
-                 "DBGT.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B CF"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B CF"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B CF"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B CF"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B CF"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B CF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B CF"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B CF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B CF"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B CF"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B CF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B CF"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B CF"]],			   				    
-                 "DBLE"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B D0"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B D8"]],
-                 "DBLE.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B DC"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B DC"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B DC"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B DC"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B DC"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B DC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B DC"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B DC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B DC"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B DC"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B DC"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B DC"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B DC"]],			   				    
-                 "DBLE.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B DD"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B DD"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B DD"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B DD"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B DD"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B DD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B DD"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B DD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B DD"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B DD"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B DD"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B DD"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B DD"]],			   				    
-                 "DBLE.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B DE"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B DE"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B DE"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B DE"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B DE"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B DE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B DE"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B DE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B DE"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B DE"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B DE"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B DE"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B DE"]],			   				    
-                 "DBLE.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B DF"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B DF"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B DF"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B DF"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B DF"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B DF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B DF"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B DF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B DF"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B DF"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B DF"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B DF"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B DF"]],			   				    
-                 "DEC"     => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "40"]],
-                 "DEC.B"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "40"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "AC"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "AC"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "AC"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "AC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "AC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "AC"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "AC"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "AC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "AC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "AC"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "AC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "AC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "AC"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "AC"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "AC"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "AC"]],			   
-                 "DEC.W"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "40"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "AD"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "AD"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "AD"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "AD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "AD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "AD"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "AD"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "AD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "AD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "AD"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "AD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "AD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "AD"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "AD"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "AD"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "AD"]],			   
-                 "DEC.L"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "40"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "AF"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "AF"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "AF"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "AF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "AF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "AF"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "AF"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "AF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "AF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "AF"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "AF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "AF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "AF"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "AF"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "AF"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "AF"]],			   
-                 "DIVS"    => [],			   
-                 "DIVS.B"  => [],			   
-                 "DIVS.W"  => [],			   
-                 "DIVS.L"  => [],			   
-                 "DIVU"    => [],			   
-                 "DIVU.B"  => [],			   
-                 "DIVU.W"  => [],			   
-                 "DIVU.L"  => [],			   
-                 "EOR"     => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,         "1B 88"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,           "1B 78"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,       "1B 88"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,         "1B 88"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,        "1B 88"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,      "1B 88"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,     "1B 88"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,         "1B 88"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,        "1B 88"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,        "1B 88"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18     "1B 88"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,        "1B 88"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,       "1B 88"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,        "1B 88"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,         "1B 88"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,       "1B 88"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24      "1B 88"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,         "1B 88"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,        "1B 88"]],
-                 "EXG"     => [[$amod_s12z_reg_reg,        \&check_s12z_reg_reg,               "AE"]],
-                 "INC"     => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "30"]],
-                 "INC.B"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "30"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "9C"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "9C"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "9C"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "9C"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "9C"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "9C"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "9C"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "9C"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "9C"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "9C"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "9C"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "9C"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "9C"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "9C"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "9C"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "9C"]],
-                 "INC.W"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "30"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "9D"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "9D"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "9D"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "9D"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "9D"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "9D"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "9D"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "9D"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "9D"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "9D"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "9D"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "9D"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "9D"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "9D"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "9D"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "9D"]],
-                 "INC.L"   => [[$amod_s12z_dreg,           \&check_s12z_dreg,                  "30"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "9F"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "9F"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "9F"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "9F"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "9F"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "9F"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "9F"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "9F"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "9F"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "9F"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "9F"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "9F"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "9F"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "9F"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "9F"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "9F"]],
-                 "JMP"     => [[$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "AA"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "AA"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "AA"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "AA"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "AA"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "AA"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "AA"],
-                               [$amod_s12z_ext,            \&check_s12z_addr24,                "BA"]
-		               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "AA"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "AA"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "AA"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "AA"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "AA"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "AA"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "AA"]],
-                 "JSR"     => [[$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "AB"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "AB"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "AB"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "AB"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "AB"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "AB"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "AB"],
-                               [$amod_s12z_ext,            \&check_s12z_addr24,                "BB"]
-		               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "AB"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "AB"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "AB"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "AB"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "AB"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "AB"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "AB"]],
-                 "LD"      => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,            "A0"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,              "90"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,          "A0"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,            "A0"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,           "A0"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,         "A0"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,        "A0"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,            "A0"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,           "A0"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,           "A0"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_addr24,           "B0"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18        "A0"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,           "A0"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,          "A0"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,            "A0"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,          "A0"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24         "A0"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,           "A0"],
-			       [$amod_s12z_xy_imm,         \&check_s12z_xy_immu4,              "A8"],
-                               [$amod_s12z_xy_imm,         \&check_s12z_xy_imm18,              "CA"],
-                               [$amod_s12z_xy_imm,         \&check_s12z_xy_imm24,              "98"],
-                               [$amod_s12z_xy_dreg,        \&check_s12z_xy_dregopr,            "A8"],
-                               [$amod_s12z_xy_idxxys,      \&check_s12z_xy_idxu4,              "A8"],
-                               [$amod_s12z_xy_incidx,      \&check_s12z_xy_incidc,             "A8"],
-                               [$amod_s12z_xy_idxdoffs,    \&check_s12z_xy_idxdoffs,           "A8"],
-                               [$amod_s12z_xy_iidxdoffs,   \&check_s12z_xy_iidxdoffs,          "A8"],
-                               [$amod_s12z_xy_idxxysp,     \&check_s12z_xy_idxs9,              "A8"],
-                               [$amod_s12z_xy_iidxxysp,    \&check_s12z_xy_iidxs9,             "A8"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_extu14,             "A8"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_addr24,             "B8"],
-                               [$amod_s12z_xy_idxdreg,     \&check_s12z_xy_idxdregu18          "A8"],
-                               [$amod_s12z_xy_idxxysp,     \&check_s12z_xy_idxu18,             "A8"],
-                               [$amod_s12z_xy_iidxxysp,    \&check_s12z_xy_iidxu18,            "A8"],
-                               [$amod_s12z_xy_idxxysp,     \&check_s12z_xy_idx24,              "A8"],
-                               [$amod_s12z_xy_iidxxysp,    \&check_s12z_xy_iidx24 ,            "A8"],
-                               [$amod_s12z_xy_idxdreg,     \&check_s12z_xy_idxdreg24           "A8"],
-                               [$amod_s12z_xy_iext,        \&check_s12z_xy_iext24,             "A8"],
-			       [$amod_s12z_s_imm,          \&check_s12z_immu4,              "1B 00"],
-                               [$amod_s12z_s_imm,          \&check_s12z_imm24,              "1B 03"],
-                               [$amod_s12z_s_dreg,         \&check_s12z_dregopr,            "1B 00"],
-                               [$amod_s12z_s_idxxys,       \&check_s12z_idxu4,              "1B 00"],
-                               [$amod_s12z_s_incidx,       \&check_s12z_incidc,             "1B 00"],
-                               [$amod_s12z_s_idxdoffs,     \&check_s12z_idxdoffs,           "1B 00"],
-                               [$amod_s12z_s_iidxdoffs,    \&check_s12z_iidxdoffs,          "1B 00"],
-                               [$amod_s12z_s_idxxysp,      \&check_s12z_idxs9,              "1B 00"],
-                               [$amod_s12z_s_iidxxysp,     \&check_s12z_iidxs9,             "1B 00"],
-                               [$amod_s12z_s_ext,          \&check_s12z_extu14,             "1B 00"],
-                               [$amod_s12z_s_idxdreg,      \&check_s12z_idxdregu18          "1B 00"],
-                               [$amod_s12z_s_idxxysp,      \&check_s12z_idxu18,             "1B 00"],
-                               [$amod_s12z_s_iidxxysp,     \&check_s12z_iidxu18,            "1B 00"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_extu18,             "1B 00"],
-                               [$amod_s12z_s_idxxysp,      \&check_s12z_idx24,              "1B 00"],
-                               [$amod_s12z_s_iidxxysp,     \&check_s12z_iidx24 ,            "1B 00"],
-                               [$amod_s12z_s_idxdreg,      \&check_s12z_idxdreg24           "1B 00"],
-                               [$amod_s12z_s_ext,          \&check_s12z_ext24,              "1B 00"],
-                               [$amod_s12z_s_iext,         \&check_s12z_iext24,             "1B 00"]],
-                 "LEA"     => [],
-                 "LSL"     => [],
-                 "LSL.B"   => [],
-                 "LSL.W"   => [],
-                 "LSL.P"   => [],
-                 "LSL.L"   => [],
-                 "LSR"     => [],
-                 "LSR.B"   => [],
-                 "LSR.W"   => [],
-                 "LSR.P"   => [],
-                 "LSR.L"   => [],
-                 "MACS"    => [],
-                 "MACS.B"  => [],
-                 "MACS.W"  => [],
-                 "MACS.L"  => [],
-                 "MACU"    => [],
-                 "MACU.B"  => [],
-                 "MACU.W"  => [],
-                 "MACU.L"  => [],
-                 "MAXS"    => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,         "1B 28"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,       "1B 28"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,         "1B 28"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,        "1B 28"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,      "1B 28"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,     "1B 28"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,         "1B 28"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,        "1B 28"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,        "1B 28"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18     "1B 28"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,        "1B 28"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,       "1B 28"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,        "1B 28"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,         "1B 28"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,       "1B 28"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24      "1B 28"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,         "1B 28"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,        "1B 28"]],
-                 "MAXU"    => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,         "1B 18"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,       "1B 18"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,         "1B 18"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,        "1B 18"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,      "1B 18"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,     "1B 18"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,         "1B 18"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,        "1B 18"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,        "1B 18"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18     "1B 18"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,        "1B 18"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,       "1B 18"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,        "1B 18"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,         "1B 18"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,       "1B 18"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24      "1B 18"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,         "1B 18"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,        "1B 18"]],
-                 "MINS"    => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,         "1B 20"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,       "1B 20"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,         "1B 20"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,        "1B 20"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,      "1B 20"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,     "1B 20"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,         "1B 20"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,        "1B 20"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,        "1B 20"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18     "1B 20"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,        "1B 20"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,       "1B 20"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,        "1B 20"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,         "1B 20"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,       "1B 20"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24      "1B 20"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,         "1B 20"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,        "1B 20"]],
-                 "MINU"    => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,         "1B 10"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,       "1B 10"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,         "1B 10"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,        "1B 10"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,      "1B 10"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,     "1B 10"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,         "1B 10"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,        "1B 10"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,        "1B 10"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18     "1B 10"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,        "1B 10"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,       "1B 10"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,        "1B 10"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,         "1B 10"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,       "1B 10"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24      "1B 10"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,         "1B 10"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,        "1B 10"]],
-                 "MODS"    => [],
-                 "MODS.B"  => [],
-                 "MODS.W"  => [],
-                 "MODS.L"  => [],
-                 "MODU"    => [],
-                 "MODU.B"  => [],
-                 "MODU.W"  => [],
-                 "MODU.L"  => [],
-                 "MOV.B"   => [],
-                 "MOV.W"   => [],
-                 "MOV.P"   => [],
-                 "MOV.L"   => [],
-                 "MULS"    => [],
-                 "MULS.B"  => [],
-                 "MULS.W"  => [],
-                 "MULS.L"  => [],
-                 "MULU"    => [],
-                 "MULU.B"  => [],
-                 "MULU.W"  => [],
-                 "MULU.L"  => [],
-                 "NEG"     => [[$amod_s12z_dreg,           \&check_s12z_dregopr,               "DF"]],
-                 "NEG.B"   => [[$amod_s12z_dreg,           \&check_s12z_dregopr,               "DC"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "DC"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "DC"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "DC"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "DC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "DC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "DC"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "DC"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "DC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "DC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "DC"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "DC"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "DC"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "DC"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "DC"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "DC"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "DC"]],
-                 "NEG.W"   => [[$amod_s12z_dreg,           \&check_s12z_dregopr,               "DD"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "DD"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "DD"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "DD"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "DD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "DD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "DD"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "DD"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "DD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "DD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "DD"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "DD"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "DD"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "DD"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "DD"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "DD"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "DD"]],
-                 "NEG.L"   => [[$amod_s12z_dreg,           \&check_s12z_dregopr,               "DF"],
-                               [$amod_s12z_idxxys,         \&check_s12z_idxu4,                 "DF"],
-                               [$amod_s12z_incidx,         \&check_s12z_incidc,                "DF"],
-                               [$amod_s12z_idxdoffs,       \&check_s12z_idxdoffs,              "DF"],
-                               [$amod_s12z_iidxdoffs,      \&check_s12z_iidxdoffs,             "DF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxs9,                 "DF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxs9,                "DF"],
-                               [$amod_s12z_ext,            \&check_s12z_extu14,                "DF"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdregu18             "DF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idxu18,                "DF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidxu18,               "DF"],
-                               [$amod_s12z_ext,            \&check_s12z_extu18,                "DF"],
-                               [$amod_s12z_idxxysp,        \&check_s12z_idx24,                 "DF"],
-                               [$amod_s12z_iidxxysp,       \&check_s12z_iidx24 ,               "DF"],
-                               [$amod_s12z_idxdreg,        \&check_s12z_idxdreg24              "DF"],
-                               [$amod_s12z_ext,            \&check_s12z_ext24,                 "DF"],
-                               [$amod_s12z_iext,           \&check_s12z_iext24,                "DF"]],
-                 "NOP"     => [[$amod_inh,                 \&check_inh,                        "01"]],
-                 "OR"      => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,            "88"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,              "78"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,          "88"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,            "88"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,           "88"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,         "88"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,        "88"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,            "88"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,           "88"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,           "88"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18        "88"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,           "88"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,          "88"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,           "88"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,            "88"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,          "88"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24         "88"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,            "88"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,           "88"]],
-                 "ORCC"    => [[$amod_s12z_imm,            \&check_s12z_imm8,                  "DE"]],
-                 "PSH"     => [[$amod_s12z_psh,            \&check_s12z_psh,                "04 00"]],
-                 "PUL"     => [[$amod_s12z_psh,            \&check_s12z_pul,                "04 80"]],
-                 "QMULS"   => [],
-                 "QMULS.B" => [],
-                 "QMULS.W" => [],
-                 "QMULS.L" => [],
-                 "QMULU"   => [],
-                 "QMULU.B" => [],
-                 "QMULU.W" => [],
-                 "QMULU.L" => [],
-                 "ROL"     => [],
-                 "ROL.B"   => [],
-                 "ROL.W"   => [],
-                 "ROL.P"   => [],
-                 "ROL.L"   => [],
-                 "ROR"     => [],
-                 "ROR.B"   => [],
-                 "ROR.W"   => [],
-                 "ROR.P"   => [],
-                 "ROR.L"   => [],
-                 "RTI"     => [[$amod_inh,                 \&check_inh,                     "1B 90"]],
-                 "RTS"     => [[$amod_inh,                 \&check_inh,                        "05"]],
-                 "SAT"     => [[$amod_s12z_dreg,           \&check_s12z_dreg,               "1B A0"]],
-                 "SBC"     => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,         "1B 80"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,           "1B 70"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,       "1B 80"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,         "1B 80"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,        "1B 80"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,      "1B 80"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,     "1B 80"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,         "1B 80"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,        "1B 80"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,        "1B 80"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18     "1B 80"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,        "1B 80"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,       "1B 80"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,        "1B 80"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,         "1B 80"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,       "1B 80"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24      "1B 80"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,         "1B 80"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,        "1B 80"]],
-                 "SEC"     => [[$amod_inh,                 \&check_inh,                     "DE 01"]],
-                 "SEI"     => [[$amod_inh,                 \&check_inh,                     "DE 10"]],
-                 "SEV"     => [[$amod_inh,                 \&check_inh,                     "DE 02"]],
-                 "SEX"     => [[$amod_s12z_reg_reg,        \&check_s12z_reg_reg,               "AE"]],
-                 "SPARE"   => [[$amod_inh,                 \&check_inh,                        "EF"]],
-                 "ST"      => [                                                                     ],
-                 "STOP"    => [[$amod_inh,                 \&check_inh,                     "1B 05"]],
-                 "SUB"     => [[$amod_s12z_dreg_imm,       \&check_s12z_dreg_immu4,            "80"],
-                               [$amod_s12z_dreg_imm,       \&check_s12z_dreg_imm,              "70"],
-                               [$amod_s12z_dreg_dreg,      \&check_s12z_dreg_dregopr,          "80"],
-                               [$amod_s12z_dreg_idxxys,    \&check_s12z_dreg_idxu4,            "80"],
-                               [$amod_s12z_dreg_incidx,    \&check_s12z_dreg_incidc,           "80"],
-                               [$amod_s12z_dreg_idxdoffs,  \&check_s12z_dreg_idxdoffs,         "80"],
-                               [$amod_s12z_dreg_iidxdoffs, \&check_s12z_dreg_iidxdoffs,        "80"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxs9,            "80"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxs9,           "80"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu14,           "80"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdregu18        "80"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idxu18,           "80"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidxu18,          "80"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_extu18,           "80"],
-                               [$amod_s12z_dreg_idxxysp,   \&check_s12z_dreg_idx24,            "80"],
-                               [$amod_s12z_dreg_iidxxysp,  \&check_s12z_dreg_iidx24 ,          "80"],
-                               [$amod_s12z_dreg_idxdreg,   \&check_s12z_dreg_idxdreg24         "80"],
-                               [$amod_s12z_dreg_ext,       \&check_s12z_dreg_ext24,            "80"],
-                               [$amod_s12z_dreg_iext,      \&check_s12z_dreg_iext24,           "80"]],
-                 "SWI"     => [[$amod_inh,                 \&check_inh,                        "FF"]],
-                 "SYS"     => [[$amod_inh,                 \&check_inh,                     "1B 07"]],
-                 "TBNE"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B 00"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B 08"]],
-                 "TBNE.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 0C"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 0C"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 0C"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 0C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 0C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 0C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 0C"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 0C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 0C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 0C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 0C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 0C"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 0C"]],			   				    
-                 "TBNE.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 0D"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 0D"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 0D"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 0D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 0D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 0D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 0D"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 0D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 0D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 0D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 0D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 0D"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 0D"]],			   				    
-                 "TBNE.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 0E"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 0E"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 0E"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 0E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 0E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 0E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 0E"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 0E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 0E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 0E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 0E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 0E"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 0E"]],			   				    
-                 "TBNE.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 0F"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 0F"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 0F"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 0F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 0F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 0F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 0F"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 0F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 0F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 0F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 0F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 0F"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 0F"]],			   				    
-                 "TBEQ"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B 10"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B 18"]],
-                 "TBEQ.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 1C"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 1C"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 1C"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 1C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 1C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 1C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 1C"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 1C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 1C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 1C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 1C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 1C"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 1C"]],			   				    
-                 "TBEQ.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 1D"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 1D"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 1D"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 1D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 1D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 1D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 1D"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 1D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 1D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 1D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 1D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 1D"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 1D"]],			   				    
-                 "TBEQ.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 1E"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 1E"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 1E"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 1E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 1E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 1E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 1E"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 1E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 1E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 1E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 1E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 1E"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 1E"]],			   				    
-                 "TBEQ.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 1F"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 1F"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 1F"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 1F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 1F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 1F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 1F"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 1F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 1F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 1F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 1F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 1F"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 1F"]],			   				    
-                 "TBPL"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B 20"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B 28"]],
-                 "TBPL.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 2C"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 2C"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 2C"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 2C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 2C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 2C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 2C"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 2C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 2C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 2C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 2C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 2C"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 2C"]],			   				    
-                 "TBPL.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 2D"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 2D"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 2D"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 2D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 2D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 2D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 2D"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 2D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 2D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 2D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 2D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 2D"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 2D"]],			   				    
-                 "TBPL.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 2E"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 2E"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 2E"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 2E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 2E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 2E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 2E"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 2E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 2E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 2E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 2E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 2E"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 2E"]],			   				    
-                 "TBPL.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 2F"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 2F"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 2F"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 2F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 2F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 2F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 2F"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 2F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 2F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 2F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 2F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 2F"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 2F"]],			   				    
-                 "TBMI"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B 30"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B 38"]],
-                 "TBMI.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 3C"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 3C"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 3C"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 3C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 3C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 3C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 3C"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 3C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 3C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 3C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 3C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 3C"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 3C"]],			   				    
-                 "TBMI.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 3D"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 3D"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 3D"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 3D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 3D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 3D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 3D"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 3D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 3D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 3D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 3D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 3D"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 3D"]],			   				    
-                 "TBMI.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 3E"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 3E"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 3E"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 3E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 3E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 3E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 3E"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 3E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 3E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 3E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 3E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 3E"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 3E"]],			   				    
-                 "TBMI.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 3F"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 3F"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 3F"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 3F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 3F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 3F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 3F"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 3F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 3F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 3F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 3F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 3F"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 3F"]],			   				    
-                 "TBGT"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B 40"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B 48"]],
-                 "TBGT.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 4C"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 4C"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 4C"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 4C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 4C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 4C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 4C"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 4C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 4C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 4C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 4C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 4C"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 4C"]],			   				    
-                 "TBGT.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 4D"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 4D"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 4D"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 4D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 4D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 4D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 4D"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 4D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 4D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 4D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 4D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 4D"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 4D"]],			   				    
-                 "TBGT.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 4E"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 4E"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 4E"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 4E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 4E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 4E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 4E"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 4E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 4E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 4E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 4E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 4E"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 4E"]],			   				    
-                 "TBGT.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 4F"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 4F"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 4F"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 4F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 4F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 4F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 4F"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 4F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 4F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 4F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 4F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 4F"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 4F"]],			   				    
-                 "TBLE"    => [[$amod_s12z_dreg_ext,       \&check_s12z_dreg_rel,           "0B 50"],
-                               [$amod_s12z_xy_ext,         \&check_s12z_xy_rel,             "0B 58"]],
-                 "TBLE.B"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 5C"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 5C"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 5C"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 5C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 5C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 5C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 5C"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 5C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 5C"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 5C"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 5C"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 5C"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 5C"]],			   				    
-                 "TBLE.W"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 5D"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 5D"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 5D"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 5D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 5D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 5D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 5D"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 5D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 5D"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 5D"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 5D"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 5D"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 5D"]],			   				    
-                 "TBLE.P"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 5E"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 5E"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 5E"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 5E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 5E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 5E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 5E"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 5E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 5E"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 5E"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 5E"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 5E"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 5E"]],			   				    
-                 "TBLE.L"  => [[$amod_s12z_idxxys_ext,     \&check_s12z_idxu4_rel,          "0B 5F"],
-			       [$amod_s12z_incidx_ext,     \&check_s12z_incidx_rel,         "0B 5F"],
-			       [$amod_s12z_idxdoffs_ext,   \&check_s12z_idxdoffs_rel,       "0B 5F"],
-			       [$amod_s12z_iidxdoffs_ext,  \&check_s12z_iidxdoffs_rel,      "0B 5F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idxs9_rel,          "0B 5F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidxs9_rel,         "0B 5F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu14_rel,         "0B 5F"],
-			       [$amod_s12z_idxdreg_ext,    \&check_s12z_idxdregu18_rel,     "0B 5F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_extu18_rel,         "0B 5F"],
-			       [$amod_s12z_idxxysp_ext,    \&check_s12z_idx24_rel,          "0B 5F"],
-			       [$amod_s12z_iidxxysp_ext,   \&check_s12z_iidx24_rel,         "0B 5F"],
-			       [$amod_s12z_ext_ext,        \&check_s12z_ext24_rel,          "0B 5F"],
-			       [$amod_s12z_iext_ext,       \&check_s12z_iext24_rel,         "0B 5F"]],			   				    
-                 "TFR"     => [[$amod_s12z_reg_reg,        \&check_s12z_reg_reg,               "9E"]],
-                 "TRAP"    => [[$amod_s12z_imm,            \&check_s12z_imm8,                  "1B"]],			   
-                 "WAI"     => [[$amod_inh,                 \&check_inh,                     "1B 06"]],
-                 "ZEX"     => [[$amod_s12z_reg_reg,        \&check_s12z_reg_reg,               "9E"]],
+*opctab_s12z = \{"ABS"     => [[$amod_s12z_dn,	        \&check_s12z_dn,		"1B 40"]],
+#                 "ADC"     => [[$amod_s12z_dp_imm,	\&check_s12z_dp_imm,		"1B 50"],
+#                                $amod_s12z_dn_xb,	\&check_s12z_dn_xb,		"1B 60"]],
+#                 "ADD"     => [[$amod_s12z_dp_imm,	\&check_s12z_dp_imm,		   "50"],
+#                                $amod_s12z_dn_xb,	\&check_s12z_dn_xb,		   "60"]],
+#                 "AND"     => [[$amod_s12z_dp_imm,	\&check_s12z_dp_imm,		   "58"],
+#                                $amod_s12z_dn_xb,	\&check_s12z_dn_xb,		   "68"]],
+#                 "ANDCC"   => [[$amod_s12z_imm,	\&check_s12z_imm,		   "CE"]],
+#                 "ASL"     => [[$amod_s12z_dn_sb,	\&check_s12z_dn,		"10 C0"]],
+#                 "ASR"     => [[$amod_s12z_dn_sb,	\&check_s12z_dn,		"10 80"]],
+#                 "BCC"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "24"]],
+#                 "BCLR"    => [[$amod_s12z_bm,		\&check_s12z_bm,		
+#                 "BCLR.B"  => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BCLR.W"  => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BCLR.L"  => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BCS"     => [[$amod_s12z_dummy,	\&check_s12z_dummy,		   "25"]],
+#                 "BEQ"     => [[$amod_s12z_dummy,	\&check_s12z_dummy,		   "27"]],
+#                 "BFEXT"   => [[$amod_s12z_dummy,	\&check_s12z_dummy,		 08 00"]
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		       ]],
+#                 "BFEXT.B" => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BFEXT.W" => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BFEXT.P" => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BFEXT.L" => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BFINS"   => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BFINS.B" => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BFINS.W" => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BFINS.P" => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BFINS.L" => [[$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BGE"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "2C"]],
+
+                 "BGND"    => [[$amod_inh,              \&check_inh,                       "00"]],
+
+#                 "BGT"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "2E"]],
+#                 "BHI"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "22"]],
+#                 "BHS"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "24"]],
+#                 "BIT"     => [[$amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 58"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"],
+#                                $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 68"]],
+#                 "BLE"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "2F"]],
+#                 "BLO"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "25"]],
+#                 "BLS"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "23"]],
+#                 "BLT"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "2D"]],
+#                 "BMI"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "2B"]],
+#                 "BNE"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "26"]],
+#                 "BPL"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "2A"]],
+#                 "BRA"     => [[$amod_s12z_rb,		\&check_s12z_rb,		   "20"]],
+#                 "BRCLR"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BRCLR.B" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BRCLR.W" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BRCLR.L" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BRSET"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BRSET.B" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BRSET.W" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BRSET.L" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BSR"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "21"]],
+#                 "BTGL"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BTGL.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BTGL.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BTGL.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "BVC"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "29"]],
+#                 "BVS"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "28"]],
+#                 "CLB"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+
+                  "CLC"     => [[$amod_inh,   	        \&check_inh,	   		"CE FE"]],
+                  "CLI"     => [[$amod_inh,	        \&check_inh,			"CE EF"]],
+
+#                 "CLR"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "38"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "5A"]],                                                                  ]],
+#                 "CLR.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "38"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "5A"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BC"]],
+#                 "CLR.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "38"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "5A"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BD"]],
+#                 "CLR.P"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "38"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "5A"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BE"]],
+#                 "CLR.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "38"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "5A"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BF"]],
+
+                 "CLV"     => [[$amod_inh,              \&check_inh, 	  	        "CE FD"]],
+
+#                 "CMP"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "E0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "F0"]],
+#                 "COM"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"]],
+#                 "COM.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CC"]],
+#                 "COM.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CD"]],
+#                 "COM.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CF"],
+#                 "DBNE"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 88"]],
+#                 "DBNE.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8C"]],			   				    
+#                 "DBNE.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8D"]],			   				    
+#                 "DBNE.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8E"]],			   				    
+#                 "DBNE.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 8F"]],			   				    
+#                 "DBEQ"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 90"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 98"]],
+#                 "DBEQ.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9C"]],			   				    
+#                 "DBEQ.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9D"]],			   				    
+#                 "DBEQ.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9E"]],			   				    
+#                 "DBEQ.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 9F"]],			   				    
+#                 "DBPL"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B A8"]],
+#                 "DBPL.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AC"]],			   				    
+#                 "DBPL.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AD"]],			   				    
+#                 "DBPL.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AE"]],			   				    
+#                 "DBPL.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B AF"]],			   				    
+#                 "DBMI"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B B0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B B8"]],
+#                 "DBMI.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BC"]],			   				    
+#                 "DBMI.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BD"]],			   				    
+#                 "DBMI.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BE"]],			   				    
+#                 "DBMI.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B BF"]],			   				    
+#                 "DBGT"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B C0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B C8"]],
+#                 "DBGT.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CC"]],			   				    
+#                 "DBGT.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CD"]],			   				    
+#                 "DBGT.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CE"]],			   				    
+#                 "DBGT.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B CF"]],			   				    
+#                 "DBLE"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B D0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B D8"]],
+#                 "DBLE.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DC"]],			   				    
+#                 "DBLE.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DD"]],			   				    
+#                 "DBLE.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DE"]],			   				    
+#                 "DBLE.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B DF"]],			   				    
+
+                 "DEC"     => [[$amod_s12z_dn,	        \&check_s12z_dn,		   "40"]],
+
+#                 "DEC.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "40"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AC"]],			   
+#                 "DEC.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "40"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AD"]],			   
+#                 "DEC.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "40"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AF"]],			   
+#                 "DIVS"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "DIVS.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "DIVS.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "DIVS.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "DIVU"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "DIVU.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "DIVU.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "DIVU.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#
+#                 "EOR"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 78"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 88"]],
+#                 "EXG"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "AE"]],
+
+                 "INC"     => [[$amod_s12z_dn,	        \&check_s12z_dn,		   "30"]],
+
+#                 "INC.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "30"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9C"]],
+#                 "INC.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "30"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9D"]],
+#                 "INC.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "30"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "9F"]],
+#                 "JMP"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BA"]
+#		               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AA"]],
+#                 "JSR"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "BB"]
+#		               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "AB"]],
+#                 "LD"      => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "90"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "B0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A0"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "CA"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "98"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "B8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "A8"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 03"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 00"]],
+#                 "LEA"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSL"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSL.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSL.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSL.P"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSL.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSR"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSR.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSR.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSR.P"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "LSR.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MACS"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MACS.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MACS.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MACS.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MACU"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MACU.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MACU.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MACU.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MAXS"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 28"]],
+#                 "MAXU"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 18"]],
+#                 "MINS"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 20"]],
+#                 "MINU"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 10"]],
+#                 "MODS"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MODS.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MODS.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MODS.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MODU"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MODU.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MODU.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MODU.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MOV.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MOV.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MOV.P"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MOV.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MULS"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MULS.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MULS.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MULS.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MULU"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MULU.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MULU.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "MULU.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "NEG"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"]],
+#                 "NEG.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DC"]],
+#                 "NEG.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DD"]],
+#                 "NEG.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "DF"]],
+
+                 "NOP"     => [[$amod_inh,		\&check_inh,		   	"01"]],
+
+#                 "OR"      => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "78"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "88"]],
+#                 "ORCC"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "DE"]],
+#                 "PSH"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		"04 00"]],
+#                 "PUL"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		"04 80"]],
+#                 "QMULS"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "QMULS.B" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "QMULS.W" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "QMULS.L" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "QMULU"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "QMULU.B" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "QMULU.W" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "QMULU.L" => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROL"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROL.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROL.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROL.P"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROL.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROR"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROR.B"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROR.W"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROR.P"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+#                 "ROR.L"   => [$amod_s12z_dummy,	\&check_s12z_dummy,		
+
+                 "RTI"     => [[$amod_inh,		\&check_inh,			"1B 90"]],
+                 "RTS"     => [[$amod_inh,		\&check_inh,			   "05"]],
+                 "SAT"     => [[$amod_s12z_dn,	        \&check_s12z_dn,		"1B A0"]],
+
+#                 "SBC"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 70"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"1B 80"]],
+
+                 "SEC"     => [[$amod_inh,		\&check_inh,			"DE 01"]],
+                 "SEI"     => [[$amod_inh,		\&check_inh,			"DE 10"]],
+                 "SEV"     => [[$amod_inh,		\&check_inh,			"DE 02"]],
+                 "SEX"     => [[$amod_s12z_tb,		\&check_s12z_tb,		   "AE"]],
+                 "SPARE"   => [[$amod_inh,		\&check_inh,		  	   "EF"]],
+
+#                 "ST"      => [$amod_s12z_dummy,	\&check_s12z_dummy,		        ],
+
+                 "STOP"    => [[$amod_inh,		\&check_inh,			"1B 05"]],
+
+#                 "SUB"     => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "70"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		   "80"]],
+
+                 "SWI"     => [[$amod_inh,		\&check_inh,			   "FF"]],
+                 "SYS"     => [[$amod_inh,		\&check_inh,			"1B 07"]],
+
+#                 "TBNE"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 00"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 08"]],
+#                 "TBNE.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0C"]],			   				    
+#                 "TBNE.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0D"]],			   				    
+#                 "TBNE.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0E"]],			   				    
+#                 "TBNE.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 0F"]],			   				    
+#                 "TBEQ"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 10"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 18"]],
+#                 "TBEQ.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1C"]],			   				    
+#                 "TBEQ.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1D"]],			   				    
+#                 "TBEQ.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1E"]],			   				    
+#                 "TBEQ.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 1F"]],			   				    
+#                 "TBPL"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 20"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 28"]],
+#                 "TBPL.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2C"]],			   				    
+#                 "TBPL.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2D"]],			   				    
+#                 "TBPL.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2E"]],			   				    
+#                 "TBPL.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 2F"]],			   				    
+#                 "TBMI"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 30"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 38"]],
+#                 "TBMI.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3C"]],			   				    
+#                 "TBMI.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3D"]],			   				    
+#                 "TBMI.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3E"]],			   				    
+#                 "TBMI.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 3F"]],			   				    
+#                 "TBGT"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 40"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 48"]],
+#                 "TBGT.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4C"]],			   				    
+#                 "TBGT.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4D"]],			   				    
+#                 "TBGT.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4E"]],			   				    
+#                 "TBGT.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 4F"]],			   				    
+#                 "TBLE"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 50"],
+#                               $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 58"]],
+#                 "TBLE.B"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5C"]],			   				    
+#                 "TBLE.W"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5D"]],			   				    
+#                 "TBLE.P"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5E"]],			   				    
+#                 "TBLE.L"  => [$amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"],
+#			       $amod_s12z_dummy,	\&check_s12z_dummy,		"0B 5F"]],			   				    
+
+                 "TFR"     => [[$amod_s12z_tb,		\&check_s12z_tb,		   "9E"]],
+
+#                 "TRAP"    => [$amod_s12z_dummy,	\&check_s12z_dummy,		   "1B"]],			   
+
+                 "WAI"     => [[$amod_inh,		\&check_inh,			"1B 06"]],
+                 "ZEX"     => [[$amod_s12z_tb,		\&check_s12z_tb,		   "9E"]]};
 
 #XGATE:           MNEMONIC      ADDRESS MODE                                            OPCODE
 *opctab_xgate = \{"ADC"    => [[$amod_xgate_tri,        \&check_xgate_tri,              "18 03"]],       #TRI
@@ -12658,6 +12630,90 @@ sub check_s12x_trap {
         $$result_ref = undef;
     }
     return 1;
+}
+
+#################
+# check_s12z_dn #
+#################
+sub check_s12z_dn {
+    my $self       = shift @_;
+    my $arg_ref    = shift @_;
+    my $pc_lin     = shift @_;
+    my $pc_pag     = shift @_;
+    my $loc_cnt    = shift @_;
+    my $sym_tabs   = shift @_;
+    my $hex_ref    = shift @_;
+    my $error_ref  = shift @_;
+    my $result_ref = shift @_;
+    #temporary
+    my @hex;
+    my $last_byte;
+
+    #printf STDERR "check_s12z_dn: %s \"%s\"\n", $#$arg_ref, $arg_ref->[0];
+    if ($self->get_s12z_dn($arg_ref->[0], , $pc_lin, $pc_pag, $loc_cnt, $sym_tabs, $error_ref, \$reg) ){
+
+
+
+
+    }
+    return 0;
+}
+
+
+    @hex       = split(" ", $$hex_ref);
+    $last_byte = , $pc_lin, $pc_pag, $loc_cnt, $sym_tabs, $error_ref,
+
+
+
+
+
+
+
+
+###############
+# get_s12z_dn #
+###############
+sub get_s12z_dn {
+    my $self       = shift @_;
+    my $string_ref = shift @_;
+    my $pc_lin     = shift @_;
+    my $pc_pag     = shift @_;
+    my $loc_cnt    = shift @_;
+    my $sym_tabs   = shift @_;
+    my $error_ref  = shift @_;
+    my $result_ref = shift @_;
+
+    ####################
+    # resolve register #
+    ####################
+    for ($$string_ref) {
+	/\s*D0\s*$/i && do {
+	    $$result_ref = 0x04;
+	    return 1; last;};
+	/\s*D1\s*$/i && do {
+	    $$result_ref = 0x05;
+	    return 1; last;};
+	/\s*D2\s*$/i && do {
+	    $$result_ref = 0x00;
+	    return 1; last;};
+	/\s*D3\s*$/i && do {
+	    $$result_ref = 0x01;
+	    return 1; last;};
+	/\s*D4\s*$/i && do {
+	    $$result_ref = 0x02;
+	    return 1; last;};
+	/\s*D5\s*$/i && do {
+	    $$result_ref = 0x03;
+	    return 1; last;};
+	/\s*D6\s*$/i && do {
+	    $$result_ref = 0x06;
+	    return 1; last;};
+	/\s*D7\s*$/i && do {
+	    $$result_ref = 0x07;
+	    return 1; last;};
+	#Invalid register
+	return 0;
+    }
 }
 
 ###################
