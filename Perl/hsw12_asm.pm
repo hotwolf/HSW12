@@ -3145,7 +3145,7 @@ sub compile {
     my $keep_compiling;
     my $result_ok;
     #compiler runs
-    my $max_comp_runs = 100;
+    my $max_comp_runs = 200;
 
     ##############
     # precompile #
@@ -4361,7 +4361,7 @@ sub compile_run {
 				    ######################
 				    # label redefinition #
 				    ######################
-				    #if ($self->{compile_count} >= 100) {
+				    #if ($self->{compile_count} >= 95) {
 				    #        printf STDOUT "REDEF: %s %X->%X (%s %s)\n", ($code_label,
 				    #                                                    $self->{comp_symbols}->{$code_label},
 				    #                                                    $label_value,
@@ -4375,7 +4375,7 @@ sub compile_run {
 				######################
 				# label redefinition #
 				######################
-				#if ($self->{compile_count} >= 100) {
+				#if ($self->{compile_count} >= 95) {
 				#    printf STDOUT "REDEF: %s %X->undef (%s %s)\n", ($code_label,
 				#                                                    $self->{comp_symbols}->{$code_label},
 				#                                                    ${$code_entry->[1]},
