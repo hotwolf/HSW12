@@ -327,7 +327,11 @@ Dirk Heisswolf
   
 =item V00.44 - Feb 13, 2013
  -fixed directory path format for Windows
-  
+
+=item V00.45 - Feb 18, 2014
+ -supporting parenthesized macro arguments (allowing indexed addresses as argument)
+ -supporting opcode substitution in macros
+
 =cut
 
 #################
@@ -370,7 +374,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.43";#"
+*version = \"00.45";#"
 
 #############################
 # default S-record settings #
@@ -427,7 +431,7 @@ if ($^O =~ /MSWin/i) {
 *precomp_blanc_line   = \qr/^\s*$/;
 *precomp_comment_line = \qr/^\s*[\;\*]/;
 #*precomp_opcode       = \qr/^([^\#]\w*\`?):?\s*([\w\.]*)\s*([^;]*)\s*[;\*]?/;        #$1:label $2:opcode $3:arguments
-*precomp_opcode       = \qr/^([^\#]\w*\`?):?\s*([\w\.]*)\s*((?:\".*?\"|\'.*?\'|[^;])*)\s*[;\*]?/;        #$1:label $2:opcode $3:arguments
+*precomp_opcode       = \qr/^([^\#]\w*\`?):?\s*([\\\w\.]*)\s*((?:\".*?\"|\'.*?\'|[^;])*)\s*[;\*]?/;        #$1:label $2:opcode $3:arguments
 
 #############
 # TFR codes #
@@ -4179,10 +4183,15 @@ sub compile_run {
 		#check macro_args
 		#@macro_args = split($del, $code_args);
 	        @macro_args = ();
-		while ($code_args =~ /^[,\s]*(\".*?\"|\'.*?\'|[^\s,]+)/) {
-		  push @macro_args, $1;
-		  $code_args = $';#'
-		  #printf "macros arg:\"%s\, \"%s\"\n", $1, $,;
+		while ($code_args =~ /^[,\s]*(\(.*?\)|\".*?\"|\'.*?\'|[^\s,]+)/) {
+		    #printf "macros args: \"%s\" (%d,%d) => %s\n", $code_args, $#macro_args, $self->{macro_argcs}->{$maro_name}, join(", ", @macro_args);
+		    my $code_arg = $1; #set current $code_arg 
+		    $code_args = $';#'  #remove current $code_arg from $code_args
+		    #remove parenthesis from $current $code_arg		
+		    if ($code_arg =~ /^\((.*)\)$/) {
+			$code_arg = $1;
+		    }
+		    push @macro_args, $code_arg;
 		}
 		#printf "macros args: \"%s\" (%d,%d) => %s\n", $code_args, $#macro_args, $self->{macro_argcs}->{$maro_name}, join(", ", @macro_args);
 		if (($#macro_args+1) == $self->{macro_argcs}->{$maro_name}) {
@@ -4214,6 +4223,14 @@ sub compile_run {
 		    $macro_entries = []; 
 		    foreach $macro_entry (@{$self->{macros}->{$maro_name}}) {
 
+			#replace macro opcodes
+			$macro_opcode = $macro_entry->[4];
+			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
+			    $macro_opcode_replace = $macro_args[$macro_argc-1];
+			    $macro_opcode =~ s/\\$macro_argc/$macro_opcode_replace/g;
+			    printf "replace macro opcode: %d \"%s\", \"%s\" => \"%s\"\n", $macro_argc, $macro_entry->[4], $macro_opcode_replace, $macro_opcode;
+			}
+
 			#replace macro args
 			$macro_arg = $macro_entry->[5];
 			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
@@ -4227,7 +4244,7 @@ sub compile_run {
 						$macro_entry->[1],
 						$macro_entry->[2],
 						$macro_entry->[3],
-						$macro_entry->[4],
+						$macro_opcode,
 						$macro_arg,
 						$macro_entry->[6],
 						$macro_entry->[7],
