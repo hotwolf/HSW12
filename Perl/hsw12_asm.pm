@@ -4228,7 +4228,7 @@ sub compile_run {
 			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
 			    $macro_opcode_replace = $macro_args[$macro_argc-1];
 			    $macro_opcode =~ s/\\$macro_argc/$macro_opcode_replace/g;
-			    printf "replace macro opcode: %d \"%s\", \"%s\" => \"%s\"\n", $macro_argc, $macro_entry->[4], $macro_opcode_replace, $macro_opcode;
+			    #printf "replace macro opcode: %d \"%s\", \"%s\" => \"%s\"\n", $macro_argc, $macro_entry->[4], $macro_opcode_replace, $macro_opcode;
 			}
 
 			#replace macro args
