@@ -4183,7 +4183,7 @@ sub compile_run {
 		#check macro_args
 		#@macro_args = split($del, $code_args);
 	        @macro_args = ();
-		while ($code_args =~ /^[,\s]*(\(.*?\)|\".*?\"|\'.*?\'|[^\s,]+)/) {
+		while ($code_args =~ /^[,\s]*(\([^\(\)]*?\)|\".*?\"|\'.*?\'|[^\s,]+)/) {
 		    #printf "macros args: \"%s\" (%d,%d) => %s\n", $code_args, $#macro_args, $self->{macro_argcs}->{$maro_name}, join(", ", @macro_args);
 		    my $code_arg = $1; #set current $code_arg 
 		    $code_args = $';#'  #remove current $code_arg from $code_args
