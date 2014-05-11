@@ -1,0 +1,57 @@
+---
+layout: post
+title: Improved Macro Support
+---
+
+I've noticed two limitations in the way HSW12 handles arguments within macros. These limitations have been resolved as of release HSW12.00.56:
+
+#< It is now possible to use indexed addresses (i.e. "4,X-" or "A,Y") as single macro argument. In fact any string that is delimited within parenthesis can now be passed to a macro as single argument. Earlier releases would not allow this, because the comma would always be interpreted as argument separator.
+
+p((. Example:
+
+bc<.       #MACRO MAC1 1       
+      LOOP  CPD   \1       
+            BNE   LOOP
+      #EMAC       
+      
+bc<.             ORG   $0000, $000000
+            MAC1  $1234
+            MAC1  (4,X+)      
+
+p((. Listing:
+
+bc<.       000000 000000                 ORG   $0000, $000000
+      000000 000000 MACRO           MAC1  $1234
+      000000 000000 BC 12 34  LOOP  CPD   \1                      (MAC1)
+      000003 000003 26 FB           BNE   LOOP                    (MAC1)
+      000005 000005 MACRO           MAC1  (4,X+)
+      000005 000005 AC 33     LOOP  CPD   \1                      (MAC1)
+      000007 000007 26 FC           BNE   LOOP                    (MAC1)
+
+#_< It is now possible to substitute opcodes within macros. Earlier releases of HSW12 only support the substitution of operants.
+
+p((. Example:
+
+bc<.       #MACRO MAC2 1       
+      LOOP  \1       
+            BNE   LOOP
+      #EMAC       
+      
+bc<.       #MACRO MAC3 2       
+      LOOP  \1, \2 
+            BEQ   LOOP
+      #EMAC
+      
+bc<.             ORG   $0000
+            MAC3  MAC2, NOP
+      
+
+p((. Listing:
+
+bc<.       000000 0F4000                                ORG   $0000
+      000000 0F4000 MACRO                          MAC3  MAC2, NOP
+      000000 0F4000 MACRO                   LOOP   \1, \2                                                                    (MAC3)
+      000000 0F4000 A7                      LOOP   \1                                                                        (MAC3/MAC2)
+      000001 0F4001 26 FD                          BNE   LOOP                                                                (MAC3/MAC2)
+      000003 0F4003 27 FB                          BEQ   LOOP                                                                (MAC3)
+
