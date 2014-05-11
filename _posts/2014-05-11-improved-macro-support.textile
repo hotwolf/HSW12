@@ -48,10 +48,11 @@ bc<.             ORG   $0000
 
 p((. Listing:
 
-bc<.      000000 0F4000                  ORG   $0000
+bc<.       000000 0F4000                  ORG   $0000
       000000 0F4000 MACRO            MAC3  MAC2, NOP
       000000 0F4000 MACRO     LOOP   \1, \2                       (MAC3)
       000000 0F4000 A7        LOOP   \1                           (MAC3/MAC2)
       000001 0F4001 26 FD            BNE   LOOP                   (MAC3/MAC2)
       000003 0F4003 27 FB            BEQ   LOOP                   (MAC3)
+
 
