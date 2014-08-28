@@ -332,6 +332,9 @@ Dirk Heisswolf
  -supporting parenthesized macro arguments (allowing indexed addresses as argument)
  -supporting opcode substitution in macros
 
+=item V00.46 - Aug 28, 2014
+ -give hints about symbol redefinition if too many compile runs are required
+
 =cut
 
 #################
@@ -371,10 +374,15 @@ use File::Basename;
 #############
 # constants #
 #############
+################################
+# Max. number of compile runs) #
+################################
+*max_comp_runs = \200;
+
 ###########
 # version #
 ###########
-*version = \"00.45";#"
+*version = \"00.46";#"
 
 #############################
 # default S-record settings #
@@ -3149,7 +3157,7 @@ sub compile {
     my $keep_compiling;
     my $result_ok;
     #compiler runs
-    my $max_comp_runs = 200;
+    #my $max_comp_runs = 200;
 
     ##############
     # precompile #
@@ -3230,7 +3238,7 @@ sub compile {
             #    $result_ok     = 0;
             #    $self->{problems} = sprintf("%d undefined opcodes!", $new_undef_count);
             } elsif (($new_undef_count == 0) &&
-                      ($redef_count     == 0)) {
+                     ($redef_count     == 0)) {
                 ##########################
                 # compilation successful #
                 ##########################
@@ -4378,13 +4386,13 @@ sub compile_run {
 				    ######################
 				    # label redefinition #
 				    ######################
-				    #if ($self->{compile_count} >= 95) {
-				    #        printf STDOUT "REDEF: %s %X->%X (%s %s)\n", ($code_label,
-				    #                                                    $self->{comp_symbols}->{$code_label},
-				    #                                                    $label_value,
-				    #                                                    ${$code_entry->[1]},
-				    #                                                    $code_entry->[0]);
-				    #}
+				    if ($self->{compile_count} >= ($max_comp_runs-5)) {
+				            printf STDOUT "Hint! Symbol redefinition: %s %X->%X (%s %s)\n", ($code_label,
+													     $self->{comp_symbols}->{$code_label},
+													     $label_value,
+													     ${$code_entry->[1]},
+													     $code_entry->[0]);
+				    }
 				    $redef_count++;
 				    $self->{comp_symbols}->{$code_label} = $label_value;
 				}
@@ -4392,12 +4400,12 @@ sub compile_run {
 				######################
 				# label redefinition #
 				######################
-				#if ($self->{compile_count} >= 95) {
-				#    printf STDOUT "REDEF: %s %X->undef (%s %s)\n", ($code_label,
-				#                                                    $self->{comp_symbols}->{$code_label},
-				#                                                    ${$code_entry->[1]},
-				#                                                    $code_entry->[0]);
-				#}
+				if ($self->{compile_count} >= ($max_comp_runs-5)) {
+				    printf STDOUT "Hint! Symbol redefinition: %s %X->undef (%s %s)\n", ($code_label,
+													$self->{comp_symbols}->{$code_label},
+													${$code_entry->[1]},
+													$code_entry->[0]);
+				}
 				$redef_count++;
 				$self->{comp_symbols}->{$code_label} = undef;
 			    }
@@ -4426,13 +4434,13 @@ sub compile_run {
 				    ######################
 				    # label redefinition #
 				    ######################
-				    #if ($self->{compile_count} >= 100) {
-				    #        printf STDOUT "REDEF: %s %X->%X (%s %s)\n", ($code_label,
-				    #                                                     $code_sym_tabs->[0]->{$code_label},
-				    #                                                     $label_value,
-				    #                                                     ${$code_entry->[1]},
-				    #                                                     $code_entry->[0]);
-				    #}
+				    if ($self->{compile_count} >= ($max_comp_runs-5)) {
+				            printf STDOUT "Hint! Symbol redefinition within a macro: %s %X->%X (%s %s)\n", ($code_label,
+															    $code_sym_tabs->[0]->{$code_label},
+															    $label_value,
+															    ${$code_entry->[1]},
+															    $code_entry->[0]);
+				    }
 				    $redef_count++;
 				    $code_sym_tabs->[0]->{$code_label} = $label_value;
 				}
@@ -4440,12 +4448,12 @@ sub compile_run {
 				######################
 				# label redefinition #
 				######################
-				#if ($self->{compile_count} >= 100) {
-				#    printf STDOUT "REDEF: %s %X->undef (%s %s)\n", ($code_label,
-				#                                                    $code_sym_tabs->[0]->{$code_label},
-				#                                                    ${$code_entry->[1]},
-				#                                                    $code_entry->[0]);
-				#}
+				if ($self->{compile_count} >= ($max_comp_runs-5)) {
+				    printf STDOUT "Hint! Symbol redefinition within a macro: %s %X->undef (%s %s)\n", ($code_label,
+														       $code_sym_tabs->[0]->{$code_label},
+														       ${$code_entry->[1]},
+														       $code_entry->[0]);
+				}
 				$redef_count++;
 				$code_sym_tabs->[0]->{$code_label} = undef;
 			    }
