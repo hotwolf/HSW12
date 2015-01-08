@@ -1,13 +1,10 @@
-<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
-<html>
-<head>
-   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-   <title>HSW12ASM</title>
-</head>
-<body background="background.gif " text="#5E34BA" link="#0000EE" vlink="#551A8B" alink="#FE0000">
+---
+layout: default
+title: HSW12 Assembler Manual
+---
 
 <center>
-<img align="middle" src="hsw12asm.gif" alt="hsw12asm">
+<img align="middle" src="{{ site.url}}/images/hsw12asm.gif" alt="hsw12asm">
 </center>
 
 <ul>
@@ -128,6 +125,8 @@ The HSW12 assembler knows the following precompiler directives:
 <li><a href="#undef">#UNDEF</a></li>
 <li><a href="#ifdef">#IFDEF</a></li>
 <li><a href="#ifndef">#IFNDEF</a></li>
+<li><a href="#ifmac">#IFMAC</a></li>
+<li><a href="#ifnmac">#IFNMAC</a></li>
 <li><a href="#else">#ELSE</a></li>
 <li><a href="#endif">#ENDIF</a></li>
 <li><a href="#include">#INCLUDE</a></li>
@@ -174,9 +173,15 @@ Starts a section of conditional code. This code will only be compiled if the def
 <h3 align="left"><a name="ifndef">#IFNDEF</a></h3>
 Starts a section of conditional code. This code will only be compiled if the define is not set.
 
+<h3 align="left"><a name="ifmac">#IFMAC</a></h3>
+Starts a section of conditional code. This code will only be compiled if the macro is defined.
+
+<h3 align="left"><a name="ifnmac">#IFNMAC</a></h3>
+Starts a section of conditional code. This code will only be compiled if the macro is not defined.
+
 <h3 align="left"><a name="else">#ELSE</a></h3>
-Ends a section of conditional code that has been initiated with <b>"#IFDEF"</b> or <b>"#IFNDEF"</b> 
-and starts a new one that requires the opposite condition.  
+Ends a section of conditional code that has been initiated with <b>"#IFDEF"</b>, <b>"#IFNDEF"</b>,
+<b>"#IFMAC"</b>, or <b>"#IFNMAC"</b> and starts a new one that requires the opposite condition.  
 
 <h3 align="left"><a name="endif">#ENDIF</a></h3>
 End a section of conditional code.
@@ -462,10 +467,6 @@ Linear addresses are equivalent to the physical address space of the NVMs inside
 </dd>
 <dd></dd>
 </dl>
-
-</body>
-</html>
-
 
 
 
