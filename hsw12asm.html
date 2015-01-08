@@ -125,6 +125,8 @@ The HSW12 assembler knows the following precompiler directives:
 <li><a href="#undef">#UNDEF</a></li>
 <li><a href="#ifdef">#IFDEF</a></li>
 <li><a href="#ifndef">#IFNDEF</a></li>
+<li><a href="#ifmac">#IFMAC</a></li>
+<li><a href="#ifnmac">#IFNMAC</a></li>
 <li><a href="#else">#ELSE</a></li>
 <li><a href="#endif">#ENDIF</a></li>
 <li><a href="#include">#INCLUDE</a></li>
@@ -171,9 +173,15 @@ Starts a section of conditional code. This code will only be compiled if the def
 <h3 align="left"><a name="ifndef">#IFNDEF</a></h3>
 Starts a section of conditional code. This code will only be compiled if the define is not set.
 
+<h3 align="left"><a name="ifmac">#IFMAC</a></h3>
+Starts a section of conditional code. This code will only be compiled if the macro is defined.
+
+<h3 align="left"><a name="ifnmac">#IFNMAC</a></h3>
+Starts a section of conditional code. This code will only be compiled if the macro is not defined.
+
 <h3 align="left"><a name="else">#ELSE</a></h3>
-Ends a section of conditional code that has been initiated with <b>"#IFDEF"</b> or <b>"#IFNDEF"</b> 
-and starts a new one that requires the opposite condition.  
+Ends a section of conditional code that has been initiated with <b>"#IFDEF"</b>, <b>"#IFNDEF"</b>,
+<b>"#IFMAC"</b>, or <b>"#IFNMAC"</b> and starts a new one that requires the opposite condition.  
 
 <h3 align="left"><a name="endif">#ENDIF</a></h3>
 End a section of conditional code.
