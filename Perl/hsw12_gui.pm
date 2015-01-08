@@ -204,7 +204,7 @@ use File::Basename;
 # version #
 ###########
 *version = \"00.20";#"
-*release = \"00.58";#"
+*release = \"00.59";#"
 
 #####################
 # macro expressions #

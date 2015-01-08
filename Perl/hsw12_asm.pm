@@ -323,7 +323,8 @@ Dirk Heisswolf
  -improved forced rel8 address mode
   
 =item V00.43 - Jan 4, 2013
- -range violations in DBEQ, DBNE, TBEQ, TBNE instructions no longer abort the compilation
+ -range violations in DBEQ, DBNE, TBEQ, TBNE instructions no longer abort the
+  compilation
   
 =item V00.44 - Feb 13, 2013
  -fixed directory path format for Windows
@@ -334,6 +335,10 @@ Dirk Heisswolf
 
 =item V00.46 - Aug 28, 2014
  -give hints about symbol redefinition if too many compile runs are required
+
+=item V00.47 - Jan 8, 2015
+ -added precompiler directives #ifmac and #ifnmac to check whether a macro has
+  already been defined.
 
 =cut
 
@@ -382,7 +387,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.46";#"
+*version = \"00.47";#"
 
 #############################
 # default S-record settings #
@@ -428,6 +433,8 @@ if ($^O =~ /MSWin/i) {
 *precomp_undef        = \qr/undef/i;
 *precomp_ifdef        = \qr/ifdef/i;
 *precomp_ifndef       = \qr/ifndef/i;
+*precomp_ifmac        = \qr/ifmac/i;
+*precomp_ifnmac       = \qr/ifnmac/i;
 *precomp_if           = \qr/if/i;
 *precomp_ifeq         = \qr/ifeq/i;
 *precomp_ifneq        = \qr/ifneq/i;
@@ -3543,7 +3550,6 @@ sub precompile {
                         # ifdef #
                         #########
                         /$precomp_ifdef/ && do {
-			    #if ($arg1 =~ /^SCI/i) {printf " ifdef \"%s\" \"%s\"\n", $arg1, exists($self->{precomp_defs}->{uc($arg1)});}
                             #print "   => ifdef\n";
                             #printf "   => %s\n", join(", ", keys %{$self->{precomp_defs}});
                             #check ifdef stack
@@ -3566,6 +3572,40 @@ sub precompile {
                             #check ifdef stack
                             if ($ifdef_stack->[$#$ifdef_stack]->[0]){
                                 if (! exists $self->{precomp_defs}->{uc($arg1)}) {
+                                    push @$ifdef_stack, [1, 0, 1];
+                                } else {
+                                    push @$ifdef_stack, [0, 0, 1];
+                                }
+                            } else {
+                                push @$ifdef_stack, [0, 0, 0];
+                            }
+                            last;};
+                        #########
+                        # ifmac #
+                        #########
+                        /$precomp_ifmac/ && do {
+                            #print "   => ifmac\n";
+                            #printf "   => %s\n", join(", ", keys %{$self->{macros}});
+                            #check ifdef stack
+                            if ($ifdef_stack->[$#$ifdef_stack]->[0]){
+                                if (exists $self->{macros}->{uc($arg1)}) {
+                                    push @$ifdef_stack, [1, 0, 1];
+                                } else {
+                                    push @$ifdef_stack, [0, 0, 1];
+                                }
+                            } else {
+                                push @$ifdef_stack, [0, 0, 0];
+                            }
+                            last;};
+                        ##########
+                        # ifnmac #
+                        ##########
+                        /$precomp_ifnmac/ && do {
+                            #print "   => ifdef\n";
+                            #printf "   => %s\n", join(", ", keys %{$self->{macros}});
+                            #check ifdef stack
+                            if ($ifdef_stack->[$#$ifdef_stack]->[0]){
+                                if (! exists $self->{macros}->{uc($arg1)}) {
                                     push @$ifdef_stack, [1, 0, 1];
                                 } else {
                                     push @$ifdef_stack, [0, 0, 1];
