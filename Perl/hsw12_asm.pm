@@ -340,6 +340,9 @@ Dirk Heisswolf
  -added precompiler directives #ifmac and #ifnmac to check whether a macro has
   already been defined.
 
+=item V00.48 - Jan 25, 2015
+ -added pseudo-opcode FLET16 to calculate the Fletcher-16 checksum of a paged
+  address range (defined by the two arguments: start address and end address).
 =cut
 
 #################
@@ -387,7 +390,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.47";#"
+*version = \"00.48";#"
 
 #############################
 # default S-record settings #
@@ -3051,6 +3054,7 @@ if ($^O =~ /MSWin/i) {
                     "FCS"      => \&psop_fcs,
                     "FDB"      => \&psop_dw,
                     "FILL"     => \&psop_fill,
+                    "FLET16"   => \&psop_flet16, #Fletcher-16 checksum generation
                     "LOC"      => \&psop_loc,
                     "ORG"      => \&psop_org,
                     "RMB"      => \&psop_dsb,
@@ -7000,6 +7004,170 @@ sub psop_fill {
     }
 }
 
+###############
+# psop_flet16 #
+###############
+sub psop_flet16 {
+    my $self            = shift @_;
+    my $pc_lin_ref      = shift @_;
+    my $pc_pag_ref      = shift @_;
+    my $loc_cnt_ref     = shift @_;
+    my $error_count_ref = shift @_;
+    my $undef_count_ref = shift @_;
+    my $label_value_ref = shift @_;
+    my $code_entry      = shift @_;
+
+    #arguments
+    my $code_args;
+    my $start_addr;
+    my $start_addr_res;
+    my $end_addr;
+    my $end_addr_res;
+    my $c0;
+    my $c1;
+
+    ##################
+    # read arguments #
+    ##################
+    $code_args = $code_entry->[5];
+    if ($code_args =~ /$psop_2_args/) {
+        $start_addr = $1;
+        $end_addr   = $2;
+
+	#printf STDERR "RAW: start addr:%s end addr:%s\n", $start_addr, $end_addr;
+        ###########################
+        # determine start address #
+        ###########################
+        ($error, $start_addr_res) = @{$self->evaluate_expression($start_addr,
+                                                                 $$pc_lin_ref,
+                                                                 $$pc_pag_ref,
+                                                                 $$loc_cnt_ref,
+						                 $code_entry->[12])};
+        if ($error) {
+            ################
+            # syntax error #
+            ################
+            $code_entry->[10] = [@{$code_entry->[10]}, $error];
+            $$error_count_ref++;
+        } elsif (! defined $start_addr_res) {
+            ###################
+            # undefined value #
+            ###################
+            $$pc_lin_ref      = undef;
+            $$pc_pag_ref      = undef;
+            $$label_value_ref = undef;
+            $$undef_count_ref++;
+        } else {
+            #######################
+            # valid start address #
+            #######################
+	    #printf STDERR "start addr found: start addr:%X end addr:%s\n", $start_addr_res, $end_addr;
+	    #########################
+	    # determine end address #
+	    #########################
+	    ($error, $end_addr_res) = @{$self->evaluate_expression($end_addr,
+								   $$pc_lin_ref,
+								   $$pc_pag_ref,
+								   $$loc_cnt_ref,
+								   $code_entry->[12])};
+	    if ($error) {
+		################
+		# syntax error #
+		################
+		$code_entry->[10] = [@{$code_entry->[10]}, $error];
+		$$error_count_ref++;
+	    } elsif (! defined $end_addr_res) {
+		###################
+		# undefined value #
+		###################
+		$$pc_lin_ref      = undef;
+		$$pc_pag_ref      = undef;
+		$$label_value_ref = undef;
+		$$undef_count_ref++;
+	    } else {
+		#####################
+		# valid end address #
+		#####################
+		#printf STDERR "end addr found: start addr:%X end addr:%X PC:%X\n", $start_addr_res, $end_addr_res, $$pc_pag_ref;		
+		#######################################################################
+		# make sure that the current PC is not inside the given address range #
+		#######################################################################
+		if ((($start_addr_res <= $end_addr_res) && ($$pc_pag_ref >= $start_addr_res) && ($$pc_pag_ref <= $end_addr_res)) ||
+		    (($start_addr_res >= $end_addr_res) && ($$pc_pag_ref <= $start_addr_res) && ($$pc_pag_ref >= $end_addr_res))) {
+		    $error = sprintf("recursive FLET16 checksum calculation (%s)",$code_args);
+		    $code_entry->[10] = [@{$code_entry->[10]}, $error];
+		    $$undef_count_ref++;
+		    $$pc_lin_ref = undef;
+		    $$pc_pag_ref = undef;
+		} else {
+		    #######################
+		    # build address space #
+		    #######################
+		    my %pag_addrspace = {};
+		    foreach my $code_entry (@{$self->{code}}) {
+			#my $code_pc_lin   = $code_entry->[6];
+			my $code_pc_pag   = $code_entry->[7];
+			my $code_hex      = $code_entry->[8];
+			if (defined $code_pc_pag) {
+			    my $address = $code_pc_pag;
+			    if (($code_hex !~ /$cmp_no_hexcode/) &&
+				($code_hex !~ /^\s*$/)) {
+				foreach my $byte (split /\s+/, $code_hex) {
+				    if ((($start_addr_res <= $end_addr_res) && ($address >= $start_addr_res) && ($address <= $end_addr_res)) ||
+					(($start_addr_res >= $end_addr_res) && ($address <= $start_addr_res) && ($address >= $end_addr_res))) {
+					$pag_addrspace{$address} = hex($byte);
+					#printf STDERR "%X: %X (%s)\n", $address, $pag_addrspace{$address}, $byte;		
+				    }
+				    $address++;	
+				}
+			    }
+			}
+		    }
+		    ######################
+		    # calculate checksum #
+		    ######################
+		    $c0 = 0;
+		    $c1 = 0;		    
+		    my $is_undefined = 0;
+		    foreach  my $address ($start_addr_res..$end_addr_res) {			
+			if (exists $pag_addrspace{$address}) {
+			    $c0 += $pag_addrspace{$address};
+			    $c0 &= 0xff;
+			    $c1 += $c0;
+			    $c1 &= 0xff;
+			} else {
+			    $is_undefined = 1;
+			    last;
+			}
+			#printf STDERR "C1:%X C0:%X\n", $c1, $c0;		
+		    }
+		    ##################
+		    # add code entry #
+		    ##################
+		    if (defined $$pc_lin_ref) {$$pc_lin_ref = ($$pc_lin_ref + 2);}
+		    if (defined $$pc_pag_ref) {$$pc_pag_ref = ($$pc_pag_ref + 2);}
+		    $code_entry->[9] = 2;
+		    if ($is_undefined) {
+			$code_entry->[8] = "?? ??";
+			$$undef_count_ref++;
+		    } else {
+			$code_entry->[8] = sprintf("%.2X %.2X", $c1, $c0);
+		    } 
+		}		    
+	    }
+	}
+   } else {
+        ################
+        # syntax error #
+        ################
+        $error = sprintf("invalid argument for pseudo opcode FLET16 (%s)",$code_args);
+        $code_entry->[10] = [@{$code_entry->[10]}, $error];
+        $$error_count_ref++;
+        $$pc_lin_ref = undef;
+        $$pc_pag_ref = undef;
+    }
+}
+
 ############
 # psop_loc #
 ############
@@ -7007,7 +7175,7 @@ sub psop_loc {
     my $self            = shift @_;
     my $pc_lin_ref      = shift @_;
     my $pc_pag_ref      = shift @_;
-    my $loc_cnt_ref   = shift @_;
+    my $loc_cnt_ref     = shift @_;
     my $error_count_ref = shift @_;
     my $undef_count_ref = shift @_;
     my $label_value_ref = shift @_;
@@ -13300,6 +13468,8 @@ sub get_tfr {
                 /^\s*(Y)\s*$/i && do {
                     $extension_byte = $extension_byte | 0x46;
                     last;};
+                ###########
+                # D -> SP #
                 ###########
                 # D -> SP #
                 ###########
