@@ -212,7 +212,12 @@ if (open (FILEHANDLE, sprintf("+>%s", $list_file_name))) {
 if ($code->{problems}) {
     printf STDERR "Problem summary: %s\n", $code->{problems};
 } else {
-
+    ###################################
+    # give memory allocation overview #
+    ###################################
+    $out_string = $code->print_mem_alloc();
+    print STDERR     "\n" . $out_string;
+    
     #####################
     # write symbol file #
     #####################

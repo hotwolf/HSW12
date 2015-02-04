@@ -343,6 +343,9 @@ Dirk Heisswolf
 =item V00.48 - Jan 25, 2015
  -added pseudo-opcode FLET16 to calculate the Fletcher-16 checksum of a paged
   address range (defined by the two arguments: start address and end address).
+
+=item V00.49 - Feb 5, 2015
+ -added subroutine "print_mem_alloc" to print an overview of the memory allocation.
 =cut
 
 #################
@@ -390,7 +393,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.48";#"
+*version = \"00.49";#"
 
 #############################
 # default S-record settings #
@@ -5163,6 +5166,7 @@ sub determine_addrspaces {
     #code
     my $code_pc_lin;
     my $code_pc_pag;
+    my $code_hex;
     #data
     my $address;
     my $byte;
@@ -6086,69 +6090,181 @@ sub print_pag_binary {
     }
 }
 
-##############
-## print_elf #
-##############
-#sub print_elf {
-#    my $self              = shift @_;
-#
-#    #output
-#    my $@elf_header;
-#    
-#    ###########################
-#    # determine program entry #
-#    ###########################
-#    my $entry_point;
-#    if ((exists $self->{pag_addrspace}->{0xfffe}) &&
-#	 (exists $self->{pag_addrspace}->{0xffff})) {
-#	 $entry_point =  [$self->{pag_addrspace}->{0xfffe}->[0],
-#			  $self->{pag_addrspace}->{0xffff}->[0]];
-#    } else {
-#	 $entry_point =  [0x00, 0x00];
-#    }
-#
-#    ##############
-#    # ELF header #
-#    ##############
-#    @elf_header = ();
-#
-#    #e_ident
-#    push @elf_header,  0x07,                  #ID
-#			ord("E"),            
-#			ord("L"),            
-#			ord("F")	            
-#			0x01,                  #ELFCLASS32
-#			0x02,                  #ELFDATA2MSB
-#			0x01,                  #Version
-#			0x00,
-#			0x00,
-#			0x00,
-#			0x00,
-#			0x00,
-#			0x00,
-#			0x00,
-#			0x00,
-#			0x00;
-#    #e_type	       
-#    push @elf_header,  0x00, 0x02             #ET_EXEC
-#    #e_machine	       		              
-#    push @elf_header,  0x00, 70               #EM_HC11
-#    #push @elf_header, 0x00, 53               #EM_HC12
-#    #e_version
-#    push @elf_header,  0x00, 0x00, 0x00, 0x01 #EV_CURRENT
-#    #e_entry
-#    push @elf_header, $entry_point->[0], $entry_point->[1];
-#    #e_phoff
-#
-#
-#    #e_shoff
-#    #e_flags
-#	  my $e_ehsize
-#	  my $e_phentsize
-#
-#
-#}
+###################
+# print_mem_alloc #
+###################
+sub print_mem_alloc {
+    my $self              = shift @_;
 
+    #code entries
+    my $code_entry;
+    my $code_pc_lin;
+    my $code_pc_pag;
+    my $code_hex;
+    my $code_bytes;
+    #allocation tracking
+    my $offset;
+    my %var_alloc  = ();
+    my %code_alloc = ();
+    #address parser
+    my $cur_pag_addr;
+    my $cur_lin_addr;
+    my $last_pag_addr;
+    my $last_lin_addr;
+    #address segments
+    my $pag_seg_start;
+    my $pag_seg_end;
+    my $lin_seg_start;
+    my $lin_seg_end;	
+    #output
+    my $out_string;
+
+    #############
+    # code loop #
+    #############
+    foreach $code_entry (@{$self->{code}}) {
+        $code_pc_lin   = $code_entry->[6];
+        $code_pc_pag   = $code_entry->[7];
+        $code_hex      = $code_entry->[8];
+        $code_bytes    = $code_entry->[9];
+	if (defined $code_bytes) {
+	    if ($code_hex !~ /^\s*$/) {
+		#code
+		foreach $offset (0..($code_bytes-1)) {
+		    if (defined $code_pc_lin) {
+			$code_alloc{$code_pc_pag+$offset}=$code_pc_lin+$offset;
+		    } else {
+			$code_alloc{$code_pc_pag+$offset}=undef;
+		    }
+		    #printf STDERR "code: %X %X\n", $code_pc_pag+$offset, $code_alloc{$code_pc_pag+$offset};
+		}
+	    } else {
+		#variables	
+		#printf STDERR "VAR! %X\n", $code_pc_pag;
+		foreach $offset (0..($code_bytes-1)) {
+		    if (defined $code_pc_lin) {
+			$var_alloc{$code_pc_pag+$offset}=$code_pc_lin+$offset;
+		    } else {
+			$var_alloc{$code_pc_pag+$offset}=undef;
+		    }
+		    #printf STDERR "var: %X %X %X\n", $code_pc_pag, $code_pc_lin, $offset;
+		}
+	    }
+	}
+    }
+   #printf STDERR "var hash: %s\n", join(",", keys{%var_alloc});
+ 
+    #############################
+    # variable allocation table #
+    #############################
+    $out_string  = "Variable Allocation:\n";
+    $out_string .= "Paged             Linear\n";
+    $out_string .= "---------------   ---------------\n";
+    my $first_segment = 1;
+    foreach $cur_pag_addr (sort {$a <=> $b} keys %var_alloc) {
+	$cur_lin_addr = $var_alloc{$cur_pag_addr};
+	#printf STDERR "VAR: %X %X\n", $cur_pag_addr, $cur_lin_addr;
+	if ($first_segment) {
+	    $first_segment = 0;
+	    $pag_seg_start = $cur_pag_addr;
+	    $lin_seg_start = $cur_lin_addr;
+	} elsif ((($last_pag_addr+1) != $cur_pag_addr)   ||
+		 ((defined  $cur_lin_addr)  &&
+		  (defined  $last_lin_addr) &&
+		  (($last_lin_addr+1) != $cur_lin_addr)) ||
+		 ( (defined  $cur_lin_addr) && !(defined  $last_lin_addr)) ||
+		 (!(defined  $cur_lin_addr) &&  (defined  $last_lin_addr))) {
+	#} elsif (($last_pag_addr+1) != $cur_pag_addr) {
+	    #printf STDERR "NEW: %X %X %X %X\n", $cur_pag_addr, $cur_lin_addr, $last_pag_addr, $last_lin_addr;
+	    $pag_seg_end = $last_pag_addr;
+	    $lin_seg_end = $last_lin_addr;
+	    #print segment boundaries
+	    if ((defined $lin_seg_start) && (defined $lin_seg_end)) {
+		$out_string .= sprintf("%.6X - %.6X   %.6X - %.6X\n", $pag_seg_start,
+				                                      $pag_seg_end,
+			             	                              $lin_seg_start,
+				                                      $lin_seg_end);
+	    } else {
+		$out_string .= sprintf("%.6X - %.6X\n", $pag_seg_start,
+				                        $pag_seg_end);
+	    }
+	    #start new segment
+	    $pag_seg_start = $cur_pag_addr;
+	    $lin_seg_start = $cur_lin_addr;	    
+	}
+	$last_pag_addr = $cur_pag_addr;
+	$last_lin_addr = $cur_lin_addr;
+    }
+    $pag_seg_end = $last_pag_addr;
+    $lin_seg_end = $last_lin_addr;
+    #print segment boundaries
+    if ((defined $lin_seg_start) && (defined $lin_seg_end)) {
+	$out_string .= sprintf("%.6X - %.6X   %.6X - %.6X\n", $pag_seg_start,
+			                                      $pag_seg_end,
+			                                      $lin_seg_start,
+			                                      $lin_seg_end);
+    } else {
+	$out_string .= sprintf("%.6X - %.6X\n", $pag_seg_start,
+			                        $pag_seg_end);
+    }
+    #print STDERR $out_string;
+    #exit;
+    #########################
+    # code allocation table #
+    #########################
+    $out_string .= "\n";
+    $out_string .= "Code Allocation:\n";
+    $out_string .= "Paged             Linear\n";
+    $out_string .= "---------------   ---------------\n";
+    my $first_segment = 1;
+    foreach $cur_pag_addr (sort {$a <=> $b} keys %code_alloc) {
+	$cur_lin_addr = $code_alloc{$cur_pag_addr};
+	#printf STDERR "CODE: %X %X\n", $cur_pag_addr, $cur_lin_addr;
+	if ($first_segment) {
+	    $first_segment = 0;
+	    $pag_seg_start = $cur_pag_addr;
+	    $lin_seg_start = $cur_lin_addr;
+	} elsif ((($last_pag_addr+1) != $cur_pag_addr)   ||
+		 ((defined  $cur_lin_addr)  &&
+		  (defined  $last_lin_addr) &&
+		  (($last_lin_addr+1) != $cur_lin_addr)) ||
+		 ( (defined  $cur_lin_addr) && !(defined  $last_lin_addr)) ||
+		 (!(defined  $cur_lin_addr) &&  (defined  $last_lin_addr))) {
+	#} elsif (($last_pag_addr+1) != $cur_pag_addr) {
+	    $pag_seg_end = $last_pag_addr;
+	    $lin_seg_end = $last_lin_addr;
+	    #print segment boundaries
+	    if ((defined $lin_seg_start) && (defined $lin_seg_end)) {
+		$out_string .= sprintf("%.6X - %.6X   %.6X - %.6X\n", $pag_seg_start,
+				                                      $pag_seg_end,
+			             	                              $lin_seg_start,
+				                                      $lin_seg_end);
+	    } else {
+		$out_string .= sprintf("%.6X - %.6X\n", $pag_seg_start,
+				                        $pag_seg_end);
+	    }
+	    #start new segment
+	    $pag_seg_start = $cur_pag_addr;
+	    $lin_seg_start = $cur_lin_addr;	    
+	}
+	$last_pag_addr = $cur_pag_addr;
+	$last_lin_addr = $cur_lin_addr;
+    }
+    $pag_seg_end = $last_pag_addr;
+    $lin_seg_end = $last_lin_addr;
+    #print segment boundaries
+    if ((defined $lin_seg_start) && (defined $lin_seg_end)) {
+	$out_string .= sprintf("%.6X - %.6X   %.6X - %.6X\n", $pag_seg_start,
+			                                      $pag_seg_end,
+			                                      $lin_seg_start,
+			                                      $lin_seg_end);
+    } else {
+	$out_string .= sprintf("%.6X - %.6X\n", $pag_seg_start,
+			                        $pag_seg_end);
+    }
+    return $out_string;
+}
+   
 #########################
 # pseudo opcode handler #
 #########################
@@ -6176,7 +6292,8 @@ sub psop_align {
     #temporary
     my $error;
     my $value;
-
+    my $count;
+    
     ##################
     # read arguments #
     ##################
@@ -6232,14 +6349,17 @@ sub psop_align {
                 ##################
                 # valid bit mask #
                 ##################
+		$count = 0;	
                 while ($$pc_pag_ref & $bit_mask_res) {
                     if (defined $$pc_lin_ref) {$$pc_lin_ref++;}
                     if (defined $$pc_pag_ref) {$$pc_pag_ref++;}
+		    $count++;
                 }
-                $code_entry->[6]  = $$pc_lin_ref;
-                $code_entry->[7]  = $$pc_pag_ref;
+                #$code_entry->[6]  = $$pc_lin_ref;
+                #$code_entry->[7]  = $$pc_pag_ref;
                 $code_entry->[8]  = "";
-                $$label_value_ref = $$pc_pag_ref;
+                $code_entry->[9]  = $count;
+                #$$label_value_ref = $$pc_pag_ref;
             }
             last;};
         #######################
@@ -6300,7 +6420,7 @@ sub psop_align {
                         if (defined $$pc_lin_ref) {$$pc_lin_ref++;}
                         if (defined $$pc_pag_ref) {$$pc_pag_ref++;}
                     }
-                    $$label_value_ref = $$pc_pag_ref;
+                    #$$label_value_ref = $$pc_pag_ref;
                     #undefine hexcode
                     $code_entry->[8] = undef;
                     $$undef_count++;
@@ -6600,6 +6720,7 @@ sub psop_dsb {
             if (defined $$pc_lin_ref) {$$pc_lin_ref = $$pc_lin_ref + $value;}
             if (defined $$pc_pag_ref) {$$pc_pag_ref = $$pc_pag_ref + $value;}
             $code_entry->[8] = "";
+            $code_entry->[9] = $value;	    
         }
     } else {
         ################
@@ -6670,6 +6791,7 @@ sub psop_dsw {
             if (defined $$pc_lin_ref) {$$pc_lin_ref = $$pc_lin_ref + ($value * 2);}
             if (defined $$pc_pag_ref) {$$pc_pag_ref = $$pc_pag_ref + ($value * 2);}
             $code_entry->[8] = "";
+            $code_entry->[9] = ($value * 2);
         }
     } else {
         ################
@@ -7152,7 +7274,8 @@ sub psop_flet16 {
 			$$undef_count_ref++;
 		    } else {
 			$code_entry->[8] = sprintf("%.2X %.2X", $c1, $c0);
-		    } 
+		    }
+		    $code_entry->[9] = 2;
 		}		    
 	    }
 	}
@@ -7497,7 +7620,8 @@ sub psop_unalign {
     #temporary
     my $error;
     my $value;
-
+    my $count;
+    
     ##################
     # read arguments #
     ##################
@@ -7549,14 +7673,17 @@ sub psop_unalign {
                 ##################
                 # valid bit mask #
                 ##################
+		$count = 0;
                 while (~$$pc_pag_ref & $bit_mask_res) {
                     if (defined $$pc_lin_ref) {$$pc_lin_ref++;}
                     if (defined $$pc_pag_ref) {$$pc_pag_ref++;}
+		    $count++;
                 }
-                $code_entry->[6]  = $$pc_lin_ref;
-                $code_entry->[7]  = $$pc_pag_ref;
+                #$code_entry->[6]  = $$pc_lin_ref;
+                #$code_entry->[7]  = $$pc_pag_ref;
                 $code_entry->[8]  = "";
-                $$label_value_ref = $$pc_pag_ref;
+                $code_entry->[9]  = $count;
+                #$$label_value_ref = $$pc_pag_ref;
             }
             last;};
         #######################
@@ -7617,7 +7744,7 @@ sub psop_unalign {
                         if (defined $$pc_lin_ref) {$$pc_lin_ref++;}
                         if (defined $$pc_pag_ref) {$$pc_pag_ref++;}
                     }
-                    $$label_value_ref = $$pc_pag_ref;
+                    #$$label_value_ref = $$pc_pag_ref;
                     #undefine hexcode
                     $code_entry->[8] = undef;
                     $$undef_count++;
