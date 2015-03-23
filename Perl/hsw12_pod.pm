@@ -645,7 +645,7 @@ sub parse_input_stream {
 		printf STDERR "Error! Can't read from device \"%s\" (%s)\n", $self->{device}, $!;
 	    }
 	    #undefine device on read error
-	    $self->set_device(undef);	
+        $self->set_device(undef);
 	} else {
 	    ######################
 	    # parse input string #
