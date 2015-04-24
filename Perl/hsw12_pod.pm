@@ -1498,7 +1498,7 @@ sub write_reg {
 	   /^pc$/   && do {$string = sprintf("pc %.4x\n",  ($data & 0xffff)); last;};
 	   /^sp$/   && do {$string = sprintf("sp %.4x\n",  ($data & 0xffff)); last;};
 	   /^x$/    && do {$string = sprintf("x %.4x\n",   ($data & 0xffff)); last;};
-	   /^y$/    && do {$string = sprintf("x %.4x\n",   ($data & 0xffff)); last;};
+	   /^y$/    && do {$string = sprintf("y %.4x\n",   ($data & 0xffff)); last;};
 	   /^a$/    && do {$string = sprintf("a %.2x\n",   ($data & 0xff));   last;};
 	   /^b$/    && do {$string = sprintf("b %.2x\n",   ($data & 0xff));   last;};
 	   /^pp$/   && do {$string = sprintf("pp %.2x\n",   ($data & 0xff));   last;};
