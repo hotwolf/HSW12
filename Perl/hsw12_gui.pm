@@ -217,6 +217,7 @@ use File::Basename;
 *macro_command_recompile     = \qr/^\s*(?:recompile|recomp|r)\s*$/isx; 
 *macro_command_evaluate      = \qr/^\s*(?:evaluate|eval|e)\s*(\S+)\s*(\d+)(b|d|h|a)\s*$/isx; #$1:expression $2:bits $3:format
 *macro_command_lookup        = \qr/^\s*(?:lookup|look|l)\s*(\S+)\s*(\d+)(b|d|h|a)\s*$/isx;   #$1:expression $2:bits $3:format
+*macro_command_baud          = \qr/^\s*(?:baud)\s*(\d+)\s*$/isx; #$1:bps
 *macro_format_bin            = \qr/^\s*(?:b)\s*$/isx; 
 *macro_format_dec            = \qr/^\s*(?:d)\s*$/isx; 
 *macro_format_hex            = \qr/^\s*(?:h)\s*$/isx; 
@@ -241,6 +242,7 @@ use File::Basename;
 *macro_allow_lookup    = \0x20;
 *macro_error_text      = \0x40;
 *macro_error_popup     = \0x80;
+*macro_allow_baud      = \0x100;
 
 ####################
 # source code tags #
@@ -1792,6 +1794,7 @@ sub terminal_send_line_cmd {
 		       $macro_allow_recompile |
 		       $macro_allow_evaluate  |
 		       $macro_allow_lookup    |
+		       $macro_allow_baud      |
 		       $macro_error_popup);
     
     ##########################
@@ -1874,6 +1877,7 @@ sub terminal_execute_macro_cmd {
                        $macro_allow_recompile |
                        $macro_allow_evaluate  |
 		       $macro_allow_lookup    |
+		       $macro_allow_baud      |
 		       $macro_error_popup);
 		       
     ##########################
@@ -4916,6 +4920,22 @@ sub evaluate_macro {
 	# process macro command #
 	#########################	
 	for ($command_string) {
+		########
+	    # baud #
+	    ########
+	    /$macro_command_baud/ && do {
+	    #read arguments
+	    $bps = $1;
+	    if ($macro_flags & $macro_allow_baud){
+	    	if (defined $self->{pod}) {
+	    		$self->{session}->{preferences}->{io}->{baud} = $bps;
+	    		$self->main_window_set_serial_speed_cmd($self)
+	    	}
+	    }
+		#return array reference
+		return [[$pre_string, $macro_tag_default],
+			@{$self->evaluate_macro($post_string, $macro_flags)}];
+		last;};
 	    ##########
 	    # update #
 	    ##########
