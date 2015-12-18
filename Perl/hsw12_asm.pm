@@ -652,7 +652,7 @@ if ($^O =~ /MSWin/i) {
 *amod_xgate_idr         = \qr/^\s*$op_xgate_reg_gpr$del\(\s*$op_xgate_reg_gpr\s*,\s*$op_xgate_reg_gpr\s*\)\s*$/i;   #$1:register $2:register $3:register
 *amod_xgate_idri        = \qr/^\s*$op_xgate_reg_gpr$del\(\s*$op_xgate_reg_gpr\s*,\s*$op_xgate_reg_gpr[+]\s*\)\s*$/i;#$1:register $2:register $3:register
 *amod_xgate_idrd        = \qr/^\s*$op_xgate_reg_gpr$del\(\s*$op_xgate_reg_gpr\s*,\s*[-]$op_xgate_reg_gpr\s*\)\s*$/i;#$1:register $2:register $3:register
-*amod_xgate_tfr_rd_ccr  = \qr/^\s*$op_xgate_reg_gpr$del\CCR\s*$/i;                                                  #$1:register
+*amod_xgate_tfr_rd_ccr  = \qr/^\s*$op_xgate_reg_gpr$del[C]CR\s*$/i;                                                  #$1:register
 *amod_xgate_tfr_ccr_rs  = \qr/^\s*CCR$del$op_xgate_reg_gpr\s*$/i;                                                   #$1:register
 *amod_xgate_tfr_rd_pc   = \qr/^\s*$op_xgate_reg_gpr$del[P]C\s*$/i;                                                  #$1:register
 
