@@ -6,7 +6,7 @@
 # author:  Dirk Heisswolf                                                        #
 # purpose: This is the core of the HSW12 Assembler                               #
 ##################################################################################
-# Copyright (C) 2003-2005 by Dirk Heisswolf. All rights reserved.                #
+# Copyright (C) 2003-2016 by Dirk Heisswolf. All rights reserved.                #
 # This file is part of "HSW12". HSW12 is free software;                          #
 # you can redistribute it and/or modify it under the same terms as Perl itself.  #
 ##################################################################################
@@ -346,6 +346,9 @@ Dirk Heisswolf
 
 =item V00.49 - Feb 5, 2015
  -added subroutine "print_mem_alloc" to print an overview of the memory allocation.
+
+=item V00.50 - Jan 25, 2016
+ -added opcode "CLRD"
 =cut
 
 #################
@@ -810,6 +813,7 @@ if ($^O =~ /MSWin/i) {
                               [$amod_hc11_indy,         \&check_hc11_indy,              "18 6F"]], #IND,Y
                  "CLRA"   => [[$amod_inh,               \&check_inh,                    "4F"   ]], #INH
                  "CLRB"   => [[$amod_inh,               \&check_inh,                    "5F"   ]], #INH
+                 "CLRD"   => [[$amod_inh,               \&check_inh,                    "4F 5F"]], #INH
                  "CLV"    => [[$amod_inh,               \&check_inh,                    "0A"   ]], #INH
                  "CMPA"   => [[$amod_imm8,              \&check_imm8,                   "81"   ],  #IMM
                               [$amod_dir,               \&check_dir,                    "91"   ],  #DIR
@@ -1228,6 +1232,7 @@ if ($^O =~ /MSWin/i) {
                               [$amod_iext,              \&check_iext,                   "69"   ]], #[EXT]
                  "CLRA"   => [[$amod_inh,               \&check_inh,                    "87"   ]], #INH
                  "CLRB"   => [[$amod_inh,               \&check_inh,                    "C7"   ]], #INH
+                 "CLRD"   => [[$amod_inh,               \&check_inh,                    "87 C7"]], #INH
                  "CLV"    => [[$amod_inh,               \&check_inh,                    "10 FD"]], #INH
                  "CMPA"   => [[$amod_imm8,              \&check_imm8,                   "81"   ],  #IMM
                               [$amod_dir,               \&check_dir,                    "91"   ],  #DIR
@@ -2029,6 +2034,7 @@ if ($^O =~ /MSWin/i) {
                               [$amod_iext,              \&check_iext,                   "69"   ]], #[EXT]
                  "CLRA"   => [[$amod_inh,               \&check_inh,                    "87"   ]], #INH
                  "CLRB"   => [[$amod_inh,               \&check_inh,                    "C7"   ]], #INH
+                 "CLRD"   => [[$amod_inh,               \&check_inh,                    "87 C7"]], #INH
                  "CLRW"   => [[$amod_ext,               \&check_ext,                    "18 79"],  #EXT
                               [$amod_idx,               \&check_idx,                    "18 69"],  #IDX
                               [$amod_idx1,              \&check_idx1,                   "18 69"],  #IDX1
