@@ -351,6 +351,10 @@ Dirk Heisswolf
  -added opcode "CLRD"
 =cut
 
+=item V00.51 - Feb 9, 2016
+ -added pseudo-opcode "ERROR"
+=cut
+
 #################
 # Perl settings #
 #################
@@ -3057,6 +3061,7 @@ if ($^O =~ /MSWin/i) {
                     "DS.B"     => \&psop_dsb,
                     "DS.W"     => \&psop_dsw,
                     "DW"       => \&psop_dw,
+                    "ERROR"    => \&psop_error,
                     "EQU"      => \&psop_equ,
                     "FCB"      => \&psop_db,
                     "FCC"      => \&psop_fcc,
@@ -6808,6 +6813,65 @@ sub psop_dsw {
         $$error_count_ref++;
         $$pc_lin_ref = undef;
         $$pc_pag_ref = undef;
+    }
+}
+
+##############
+# psop_error #
+##############
+sub psop_error {
+    my $self            = shift @_;
+    my $pc_lin_ref      = shift @_;
+    my $pc_pag_ref      = shift @_;
+    my $loc_cnt_ref     = shift @_;
+    my $error_count_ref = shift @_;
+    my $undef_count_ref = shift @_;
+    my $label_value_ref = shift @_;
+    my $code_entry      = shift @_;
+
+    #arguments
+    my $code_args;
+    my $string;
+    my $first_char;
+    #hex code
+    my $char;
+    my @hex_code;
+    #temporary
+
+    ##################
+    # read arguments #
+    ##################
+    $code_args  = $code_entry->[5];
+
+    ##################
+    # check argument #
+    ##################
+    if ($code_args =~ /$psop_string/) {
+        $string = $1;
+
+        #trim string
+        $string =~ s/^\s*//;
+        $string =~ s/\s*$//;
+
+        #trim first character
+        $string     =~ s/^(.)//;
+        $first_char = $1;
+
+        #trim send of string
+        if ($string =~ /^(.*)$first_char/) {$string = $1;}
+        #printf STDERR "fcc: \"%s\" \"%s\"\n", $first_char, $string;
+
+        $error = $string;
+        $code_entry->[10] = [@{$code_entry->[10]}, $error];
+        $$error_count_ref++;
+	
+    } else {
+        ################
+        # syntax error #
+        ################
+        $error = "intentional compile error";
+        $code_entry->[10] = [@{$code_entry->[10]}, $error];
+        $$error_count_ref++;
     }
 }
 

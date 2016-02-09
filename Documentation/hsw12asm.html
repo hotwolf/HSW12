@@ -243,6 +243,7 @@ The following pseudo-opcodes are supported by the HSW12 assembler:<br>
 <li><a href="#dc.w">DC.W (DW, FDW)</a></li>
 <li><a href="#ds.b">DS.B (DS, RMB)</a></li>
 <li><a href="#ds.w">DS.W (RMW)</a></li>
+<li><a href="#error">ERROR</a></li>
 <li><a href="#equ">EQU</a></li>
 <li><a href="#fcc">FCC</a></li>
 <li><a href="#fcs">FCS</a></li>
@@ -324,13 +325,20 @@ Syntax:<br>
 </listing>
 <br>
 
+<h3 align="left"><a name="error">ERROR</a></h3>
+Triggers an intentional compile error. The string must be surrounded by a delimeter
+which can be any character.<br>
+Syntax:<br>
+<listing>
+        ERROR &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
+</listing>
+
 <h3 align="left"><a name="equ">EQU</a></h3>
 Directly assigns a value to a symbol.<br>
 Syntax:<br>
 <listing>
 &lt;symbol&gt; EQU &lt;expression&gt;
 </listing>
-<br>
 
 <h3 align="left"><a name="fcc">FCC</a></h3>
 Writes an ASCII string into the memory. The string must be surrounded by a delimeter
@@ -340,7 +348,7 @@ Syntax:<br>
         FCC &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
 </listing>
 
-<h3 align="left"><a name="fcc">FCS</a></h3>
+<h3 align="left"><a name="fcs">FCS</a></h3>
 Writes an ASCII string into the memory, which is termitated by a set MSB in the last character.
 The string must be surrounded by a delimeterwhich can be any character.<br>
 Syntax:<br>
