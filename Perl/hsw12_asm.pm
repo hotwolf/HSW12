@@ -352,7 +352,11 @@ Dirk Heisswolf
 =cut
 
 =item V00.51 - Feb 9, 2016
- -added pseudo-opcode "ERROR"
+ -added pseudo-opcode "ERROR".
+=cut
+
+=item V00.52 - Feb 10, 2016
+ -added subroutine "print_error_summary" to print the first 5 error messages.
 =cut
 
 #################
@@ -6099,6 +6103,77 @@ sub print_pag_binary {
 	
 	return pack "C*", @out_list;   
     }
+}
+
+#######################
+# print_error_summary #
+#######################
+sub print_error_summary {
+    my $self      = shift @_;
+
+    #code
+    my $code_entry;
+    my $code_file;
+    my $code_line;
+    my $code_comments;
+    my $code_pc_lin;
+    my $code_pc_pag;
+    my $code_hex;
+    my $code_errors;
+    my $code_error;
+    my $code_macros;
+    #comments
+    my @cmt_lines;
+    my $cmt_last_line;
+   #output
+   my $out_string;
+   my $out_count;
+
+    ############################
+    # initialize output string #
+    ############################
+    $out_string = "";
+    $out_count  = 0;
+
+    #############
+    # code loop #
+    #############
+    foreach $code_entry (@{$self->{code}}) {
+
+        $code_line     = $code_entry->[0];
+        $code_file     = $code_entry->[1];
+        $code_comments = $code_entry->[2];
+        $code_pc_lin   = $code_entry->[6];
+        $code_pc_pag   = $code_entry->[7];
+        $code_hex      = $code_entry->[8];
+        $code_errors   = $code_entry->[10];
+        $code_macros   = $code_entry->[11];
+
+        ################
+        # print errors #
+        ################
+        foreach $code_error (@$code_errors) {
+	    $out_count++;
+	    if ($out_count <= 5) {
+		#extract source code
+		#@cmt_lines = @$code_comments;
+		#$cmt_last_line = pop @cmt_lines;
+		#print error message
+		#$out_string .= sprintf("ERROR! %s (%s, line: %d) -> %s\n", ($code_error,
+		#						            $$code_file,
+		#						            $code_line,
+                #                                                            $cmt_last_line));
+		$out_string .= sprintf("ERROR! %s (%s, line: %d)\n", ($code_error,
+								      $$code_file,
+								      $code_line));
+	    } elsif ($out_count == 6) {
+		$out_string .= "...\n";
+	    } else {
+		last;
+	    }
+        }
+    }
+    return $out_string;
 }
 
 ###################

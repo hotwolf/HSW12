@@ -211,6 +211,8 @@ if (open (FILEHANDLE, sprintf("+>%s", $list_file_name))) {
 #####################
 if ($code->{problems}) {
     printf STDERR "Problem summary: %s\n", $code->{problems};
+    $out_string = $code->print_error_summary();
+    print STDERR $out_string;
 } else {
     ###################################
     # give memory allocation overview #
