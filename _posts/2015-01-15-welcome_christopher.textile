@@ -1,0 +1,6 @@
+---
+layout: post
+title: Welcome Christopher
+---
+
+The HSW12 development team has grown by 100%. Welcome on board, "Christopher Chavez":https://github.com/chrstphrchvz.
