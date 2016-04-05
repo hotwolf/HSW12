@@ -157,6 +157,10 @@ r
 
  - added /dev/ttyUSB devices
 
+=item V00.21 - Feb 18, 2016
+
+ - permanently enabled scrollbars to workaround bug in 'o' option
+ 
 =back
 
 =cut
@@ -203,7 +207,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.20";#"
+*version = \"00.21";#"
 *release = \"00.62";#"
 
 #####################
@@ -1456,7 +1460,7 @@ sub main_window_about_cmd {
     $self->{gui}->{about_dialog}->{toplevel}->gridRowconfigure(   1, -weight => 0);
     #$self->{gui}->{about_dialog}->{text} = 
     #  $self->{gui}->{about_dialog}->{toplevel}->Scrolled('ROText', 
-    #							  -scrollbars => 'osoe',
+    #							  -scrollbars => 'se',
     #							  -wrap       => 'none');
     #$self->{gui}->{about_dialog}->{text}->grid(-column  => 0,
     #						-row     => 0, 
@@ -1509,7 +1513,7 @@ sub create_terminal_window {
 	    $self->{gui}->{terminal}->{text_frame}->gridRowconfigure(   0, -weight => 1);
 	    $self->{gui}->{terminal}->{text_text} = 
 		$self->{gui}->{terminal}->{text_frame}->Scrolled('ROText', 
-								 -scrollbars => 'osoe',
+								 -scrollbars => 'se',
 								 -wrap       => 'none');
 	    $self->{gui}->{terminal}->{text_text}->grid(-column => 0, -row => 0, -sticky => 'nsew');
 	    $self->{gui}->{terminal}->{text_text}->bind('<KeyPress>', [sub {my $keysym = $Tk::event->K;
@@ -1600,7 +1604,7 @@ sub create_terminal_window {
 		$self->{gui}->{terminal}->{macro_dialog}->add('Scrolled', 'Text', 
 							      #-background          => $self->{session}->{colors}->{white},
 							      #-highlightbackground => $self->{session}->{colors}->{white},
-							      -scrollbars => 'osoe',
+							      -scrollbars => 'se',
 							      -wrap       => 'none');
 	    #$self->{gui}->{terminal}->{macro_dialog_text}->grid(-column => 0, -row => 1, -sticky => 'nsew');
 	    $self->{gui}->{terminal}->{macro_dialog_text}->pack(-fill   => 'both',
@@ -1977,7 +1981,7 @@ sub create_source_code_window {
 	    $self->{gui}->{source_code}->{text_frame}->gridRowconfigure(   0, -weight => 1);
 	    $self->{gui}->{source_code}->{text_text} = 
 		$self->{gui}->{source_code}->{text_frame}->Scrolled('ROText', 
-								    -scrollbars => 'osoe',
+								    -scrollbars => 'se',
 								    -wrap       => 'none');
 	    $self->{gui}->{source_code}->{text_text}->grid(-column => 0, -row => 0, -sticky => 'nsew');
 	    $self->{gui}->{source_code}->{text_text}->bind('<Double-Button-1>', [\&source_edit_cmd, $self]);
@@ -2722,7 +2726,7 @@ sub create_variables_window {
 	    $self->{gui}->{variables}->{text_frame}->gridRowconfigure(   0, -weight => 1);
 	    $self->{gui}->{variables}->{text_text} = 
 		$self->{gui}->{variables}->{text_frame}->Scrolled('ROText', 
-								  -scrollbars => 'osoe',
+								  -scrollbars => 'se',
 								  -wrap       => 'none');
 	    $self->{gui}->{variables}->{text_text}->grid(-column => 0, -row => 0, -sticky => 'nsew');
 	    $self->{gui}->{variables}->{text_text}->bind('<Double-Button-1>', [\&variables_edit_cmd, $self]);
@@ -2773,7 +2777,7 @@ sub create_variables_window {
 		$self->{gui}->{variables}->{edit_dialog_frame}->Scrolled('Text', 
 									 #-background          => $self->{session}->{colors}->{white},
 									 #-highlightbackground => $self->{session}->{colors}->{white},
-									 -scrollbars => 'osoe',
+									 -scrollbars => 'se',
 									 -wrap       => 'none');
 	    $self->{gui}->{variables}->{edit_dialog_text}->grid(-column => 0, -row => 0, -sticky => 'nsew');
 	    $self->{gui}->{variables}->{edit_dialog_text}->bind('<Key-Return>' => [sub {$_[0]->break;}]);	    
