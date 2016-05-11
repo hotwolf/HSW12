@@ -1,9 +1,0 @@
----
-layout: post
-title: New Web Site
----
-
-Welcome to the new HSW12 web site. I've created this new "Jekyll":http://jekyllrb.com/ based web site to make easier to post news about the HSW12 project.
-
-More to come soon ...
-
