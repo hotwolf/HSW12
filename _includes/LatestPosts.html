@@ -4,7 +4,7 @@
 
 <h2><a class="active" href="{{ site.url }}{{ post.url }}">{{ post.date | date_to_string }} - {{ post.title }}</a></h2>
 <div>
-{{ post.content | textilize}}
+{{ post.content | markdownify }}
 </div>
 
 {% endfor %}

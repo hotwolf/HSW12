@@ -3,7 +3,7 @@ auto:        true
 server:      true
 server_port: 80
 baseurl:     /
-url:         http://hotwolf.github.com/HSW12
+url:         //hotwolf.github.com/HSW12
 
 source:      .
 destination: ./_site
