@@ -349,14 +349,15 @@ Dirk Heisswolf
 
 =item V00.50 - Jan 25, 2016
  -added opcode "CLRD"
-=cut
 
 =item V00.51 - Feb 9, 2016
  -added pseudo-opcode "ERROR".
-=cut
 
 =item V00.52 - Feb 10, 2016
  -added subroutine "print_error_summary" to print the first 5 error messages.
+
+=item V00.53 - Jun 22, 2016
+ -macro enhancement: arg substitution for labels and code listing
 =cut
 
 #################
@@ -404,7 +405,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.49";#"
+*version = \"00.53";#"
 
 #############################
 # default S-record settings #
@@ -462,8 +463,8 @@ if ($^O =~ /MSWin/i) {
 *precomp_emac         = \qr/emac/i;
 *precomp_blanc_line   = \qr/^\s*$/;
 *precomp_comment_line = \qr/^\s*[\;\*]/;
-#*precomp_opcode       = \qr/^([^\#]\w*\`?):?\s*([\w\.]*)\s*([^;]*)\s*[;\*]?/;        #$1:label $2:opcode $3:arguments
-*precomp_opcode       = \qr/^([^\#]\w*\`?):?\s*([\\\w\.]*)\s*((?:\".*?\"|\'.*?\'|[^;])*)\s*[;\*]?/;        #$1:label $2:opcode $3:arguments
+#*precomp_opcode      = \qr/^([^\#][\\\w]*\`?):?\s*([\w\.]*)\s*([^;]*)\s*[;\*]?/;                       #$1:label $2:opcode $3:arguments
+*precomp_opcode       = \qr/^([^\#][\\\w]*\`?):?\s*([\\\w\.]*)\s*((?:\".*?\"|\'.*?\'|[^;])*)\s*[;\*]?/; #$1:label $2:opcode $3:arguments
 
 #############
 # TFR codes #
@@ -4020,8 +4021,16 @@ sub compile_run {
     #macros
     my $maro_name;
     my @macro_args;
-    my $macro_arg;
     my $macro_argc;
+    my @macro_comments;
+    my $macro_comment;
+    my $macro_comment_replace;
+    my $macro_comment_keep;
+    my $macro_label;
+    my $macro_label_replace;
+    my $macro_opcode;
+    my $macro_opcode_replace;
+    my $macro_arg;
     my $macro_arg_replace;
     my $macro_hierarchy;
     my $maro_sym_tab;
@@ -4030,6 +4039,7 @@ sub compile_run {
     my $macro_entries;
     my $macro_entry;
     my @macro_code_list;
+
     #label
     my @label_stack;
     my $prev_macro_depth;
@@ -4293,6 +4303,30 @@ sub compile_run {
 		    $macro_entries = []; 
 		    foreach $macro_entry (@{$self->{macros}->{$maro_name}}) {
 
+			#replace macro comments
+			@macro_comments = @{$macro_entry->[2]};
+			$macro_comment  = pop @macro_comments;
+			if ($macro_comment =~ /^(.*)(\;.*)$/ ) {
+			    $macro_comment = $1;
+			    $macro_comment_keep = $2;
+			} else {
+			    $macro_comment_keep = "";
+			}
+			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
+			    $macro_comment_replace = $macro_args[$macro_argc-1];
+			    $macro_comment =~ s/\\$macro_argc/$macro_comment_replace/g;
+			    #printf "replace macro comment: %d \"%s\" => \"%s\"\n", $macro_argc, $macro_comment_replace, $macro_comment;
+			}
+			$macro_comment .=  $macro_comment_keep;
+			
+			#replace macro label
+			$macro_label = $macro_entry->[3];
+			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
+			    $macro_label_replace = $macro_args[$macro_argc-1];
+			    $macro_label =~ s/\\$macro_argc/$macro_label_replace/g;
+			    #printf "replace macro label: %d \"%s\", \"%s\" => \"%s\"\n", $macro_argc, $macro_entry->[3], $macro_label_replace, $macro_label;
+			}
+
 			#replace macro opcodes
 			$macro_opcode = $macro_entry->[4];
 			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
@@ -4312,8 +4346,8 @@ sub compile_run {
 			#copy macro element
 			push @$macro_entries , [$macro_entry->[0],
 						$macro_entry->[1],
-						$macro_entry->[2],
-						$macro_entry->[3],
+						[@macro_comments, $macro_comment],
+						$macro_label,
 						$macro_opcode,
 						$macro_arg,
 						$macro_entry->[6],
