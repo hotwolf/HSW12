@@ -358,6 +358,13 @@ Dirk Heisswolf
 
 =item V00.53 - Jun 22, 2016
  -macro enhancement: arg substitution for labels and code listing
+
+=item V00.54 - Aug 13, 2016
+ -added precompiler directives #ifcpu and #ifncpu to check the current target 
+  processor.
+ -Be carefull when using the pseudo-opcode "CPU" inside macros. The precompile
+  step may have a compile order then the remaining compile steps  
+
 =cut
 
 #################
@@ -454,8 +461,8 @@ if ($^O =~ /MSWin/i) {
 *precomp_ifmac        = \qr/ifmac/i;
 *precomp_ifnmac       = \qr/ifnmac/i;
 *precomp_if           = \qr/if/i;
-*precomp_ifeq         = \qr/ifeq/i;
-*precomp_ifneq        = \qr/ifneq/i;
+*precomp_ifcpu        = \qr/ifcpu/i;
+*precomp_ifncpu       = \qr/ifncpu/i;
 *precomp_else         = \qr/else/i;
 *precomp_endif        = \qr/endif/i;
 *precomp_include      = \qr/include/i;
@@ -3317,6 +3324,8 @@ sub precompile {
     #errors
     my $error;
     my $error_count;
+    #CPU
+    my $cpu = $self->{cpu};
     #line
     my $line;
     my $line_count;
@@ -3476,6 +3485,12 @@ sub precompile {
                     #printf " ===> \"%s\" \"%s\" \"%s\"\n", $label, $opcode, $arguments;
                     #check ifdef stack
                     if ($ifdef_stack->[$#$ifdef_stack]->[0]){
+
+			#Interpret pseudo opcode CPU
+			if ($cpcode eq $psop_cpu) {
+			    $cpu = uc($arguments);
+			}
+
                         #store source code line
                         push @srccode_sequence, $line;
 			if (defined $macro) {
@@ -3624,11 +3639,43 @@ sub precompile {
                         # ifnmac #
                         ##########
                         /$precomp_ifnmac/ && do {
-                            #print "   => ifdef\n";
+                            #print "   => ifnmac\n";
                             #printf "   => %s\n", join(", ", keys %{$self->{macros}});
                             #check ifdef stack
                             if ($ifdef_stack->[$#$ifdef_stack]->[0]){
                                 if (! exists $self->{macros}->{uc($arg1)}) {
+                                    push @$ifdef_stack, [1, 0, 1];
+                                } else {
+                                    push @$ifdef_stack, [0, 0, 1];
+                                }
+                            } else {
+                                push @$ifdef_stack, [0, 0, 0];
+                            }
+                            last;};
+                        #########
+                        # ifcpu #
+                        #########
+                        /$precomp_ifcpu/ && do {
+                            #print "   => ifcpu\n";
+                            #check ifdef stack
+                            if ($ifdef_stack->[$#$ifdef_stack]->[0]){
+                                if ($cpu eq uc($arg1)) {
+                                    push @$ifdef_stack, [1, 0, 1];
+                                } else {
+                                    push @$ifdef_stack, [0, 0, 1];
+                                }
+                            } else {
+                                push @$ifdef_stack, [0, 0, 0];
+                            }
+                            last;};
+                        ##########
+                        # ifncpu #
+                        ##########
+                        /$precomp_ifncpu/ && do {
+                            #print "   => ifncpu\n";
+                            #printf "   => %s\n", join(", ", keys %{$self->{macros}});
+                            if ($ifdef_stack->[$#$ifdef_stack]->[0]){
+                                if ($cpu ne uc($arg1)) {
                                     push @$ifdef_stack, [1, 0, 1];
                                 } else {
                                     push @$ifdef_stack, [0, 0, 1];
