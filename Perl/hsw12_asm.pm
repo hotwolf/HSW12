@@ -77,7 +77,7 @@ This module provides subroutines to...
  This method requires five arguments:
      1. $string:      S0 header                        (string)
      2. $srec_format: address format: S19, S28, or S37 (string)
-     3. $srec_length: nuber of data bytes in S-Record  (integer)
+     3. $srec_length: number of data bytes in S-Record (integer)
      4. $fill_bytes:  add fill bytes                   (boolean)
 
 =item $asm_object->print_pag_srec($string,
@@ -90,7 +90,7 @@ This module provides subroutines to...
  This method requires five arguments:
      1. $string:      S0 header                        (string)
      2. $srec_format: address format: S19, S28, or S37 (string)
-     3. $srec_length: nuber of data bytes in S-Record  (integer)
+     3. $srec_length: number of data bytes in S-Record (integer)
      4. $fill_bytes:  add fill bytes                   (boolean)
 
 =item $asm_object->print_pag_srec($string,
@@ -103,7 +103,7 @@ This module provides subroutines to...
  This method requires five arguments:
      1. $string:      S0 header                        (string)
      2. $srec_format: address format: S19, S28, or S37 (string)
-     3. $srec_length: nuber of data bytes in S-Record  (integer)
+     3. $srec_length: number of data bytes in S-Record (integer)
      4. $fill_bytes:  add fill bytes                   (boolean)
 
 =back
