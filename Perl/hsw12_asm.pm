@@ -412,7 +412,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.53";#"
+*version = \"00.54";#"
 
 #############################
 # default S-record settings #
