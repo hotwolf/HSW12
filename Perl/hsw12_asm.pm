@@ -363,7 +363,11 @@ Dirk Heisswolf
  -added precompiler directives #ifcpu and #ifncpu to check the current target 
   processor.
  -Be carefull when using the pseudo-opcode "CPU" inside macros. The precompile
-  step may have a compile order then the remaining compile steps  
+  step may have a different compile order then the remaining compile steps  
+
+=item V00.55 - Dec 09, 2016
+ -Reduced comment clutter in list files. Comments separated by a blanc line
+  are no longer associated with the following instruction.
 
 =cut
 
@@ -412,7 +416,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.54";#"
+*version = \"00.55";#"
 
 #############################
 # default S-record settings #
@@ -3546,6 +3550,8 @@ sub precompile {
                     if ($ifdef_stack->[$#$ifdef_stack]->[0]){
                         #store comment line
                         #push @srccode_sequence, "";
+			#clear comment buffer
+			@srccode_sequence = ();
                     }
                     last;};
                 #########################
