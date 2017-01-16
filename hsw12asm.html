@@ -247,7 +247,9 @@ The following pseudo-opcodes are supported by the HSW12 assembler:<br>
 <li><a href="#equ">EQU</a></li>
 <li><a href="#fcc">FCC</a></li>
 <li><a href="#fcs">FCS</a></li>
+<li><a href="#fcz">FCZ</a></li>
 <li><a href="#fill">FILL</a></li>
+<li><a href="#flet16">FLET16</a></li>
 <li><a href="#loc">LOC</a></li>
 <li><a href="#org">ORG</a></li>
 <li><a href="#unalign">UNALIGN</a></li>
@@ -356,11 +358,28 @@ Syntax:<br>
         FCS &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
 </listing>
 
+<h3 align="left"><a name="fcz">FCZ</a></h3>
+Writes an ASCII string into the memory, which is termitated by a zero character ($00).
+The string must be surrounded by a delimeterwhich can be any character.<br>
+Syntax:<br>
+<listing>
+        FCZ &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
+</listing>
+
 <h3 align="left"><a name="fill">FILL</a></h3>
 Fills a number of memory bytes with an 8-bit pattern.<br>
 Syntax:<br>
 <listing>
         FILL &lt;pattern&gt;, &lt;#bytes&gt;
+</listing>
+<br>
+
+<h3 align="left"><a name="flet16">FLET16</a></h3>
+Calculates the Fletcher-16 checksum of a paged address range
+(defined by the two arguments: start address and end address).<br>
+Syntax:<br>
+<listing>
+        FLET16 &lt;start address&gt;, &lt;end address&gt;
 </listing>
 <br>
 
