@@ -25,7 +25,7 @@ Some features of this assembler are:
 <ul>
 <li>It handles 16MB of address space</li>
 <li>It generates linear and paged S-Record files</li>
-<li>It uses two program counters (linear and paged) to contol the S-Record output</li>
+<li>It uses two program counters (linear and paged) to control the S-Record output</li>
 <li>It exports source code symbols into the <a href="hsw12.html"><b>HSW12 IDE</b></a></li>
 </ul>
 This assembler is normally invoked from the <a href="hsw12.html"><b>HSW12 IDE</b></a>, however 
@@ -38,7 +38,7 @@ it can be used stand alone with the command line interface <b>hsw12asm.pl</b>.
          &lt;defines&gt;         assembler defines
          S19,S28           S-Record format
 </b></listing>
-The following sections give some insight to the assembler's source code format and it's outputs.
+The following sections give some insight to the assembler's source code format and its outputs.
 
 <hr>
 <h2 align="left"><a name="comments">Comments</a></h2>
@@ -85,7 +85,7 @@ Integer Constants are of the following format:<br>
 </listing>
 
 <h3 align="left"><a name="operators">Operators</a></h3>
-The HSW12 assembler supports the operaters that are listed below (from highest to lowest precedence). 
+The HSW12 assembler supports the operators that are listed below (from highest to lowest precedence). 
 Expressions may be nested in parenthesis.
 <listing>
     &  bitwise AND
@@ -157,12 +157,12 @@ into compiler symbols at the end of the precompile step.<br>
 
 To make the HSW12 assembler behave a little more like the
 <a href="http://www.freescale.com">AS12</a>, 
-all lables and pseudo-opcode symbol assignments will be considered as precompiler defines as well.
+all labels and pseudo-opcode symbol assignments will be considered as precompiler defines as well.
 
 <h3 align="left"><a name="undef">#UNDEF</a></h3>
 Undefines an assembler define.
 <br>
-<b>"#UNDEF"</b> requrires one argument:
+<b>"#UNDEF"</b> requires one argument:
 <ol>
 <li>a define name</li>
 </ol>
@@ -263,7 +263,7 @@ the begin of             be separated
 the line                 by a comma
 |                            |
 V                            V
-<b>&lt;symbol&gt; &lt;psudo-opcode&gt; &lt;arg&gt;, &lt;arg&gt;, ...</b> 
+<b>&lt;symbol&gt; &lt;pseudo-opcode&gt; &lt;arg&gt;, &lt;arg&gt;, ...</b> 
         ^              ^
         |              |
         +-spaces, tabs-+
@@ -283,7 +283,7 @@ or<br>
 <br>
 
 <h3 align="left"><a name="cpu">CPU</a></h3>
-Switches to a different opcode table. Supportd CPUs are:<br>
+Switches to a different opcode table. Supported CPUs are:<br>
 <ul>
 <li>HC11 (untested)</li>
 <li>HC12</li>
@@ -328,11 +328,11 @@ Syntax:<br>
 <br>
 
 <h3 align="left"><a name="error">ERROR</a></h3>
-Triggers an intentional compile error. The string must be surrounded by a delimeter
+Triggers an intentional compile error. The string must be surrounded by a delimiter
 which can be any character.<br>
 Syntax:<br>
 <listing>
-        ERROR &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
+        ERROR &lt;delimiter&gt;&lt;string&gt;&lt;delimiter&gt;
 </listing>
 
 <h3 align="left"><a name="equ">EQU</a></h3>
@@ -343,19 +343,19 @@ Syntax:<br>
 </listing>
 
 <h3 align="left"><a name="fcc">FCC</a></h3>
-Writes an ASCII string into the memory. The string must be surrounded by a delimeter
+Writes an ASCII string into the memory. The string must be surrounded by a delimiter
 which can be any character.<br>
 Syntax:<br>
 <listing>
-        FCC &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
+        FCC &lt;delimiter&gt;&lt;string&gt;&lt;delimiter&gt;
 </listing>
 
 <h3 align="left"><a name="fcs">FCS</a></h3>
-Writes an ASCII string into the memory, which is termitated by a set MSB in the last character.
-The string must be surrounded by a delimeterwhich can be any character.<br>
+Writes an ASCII string into the memory, which is terminated by a set MSB in the last character.
+The string must be surrounded by a delimiter which can be any character.<br>
 Syntax:<br>
 <listing>
-        FCS &lt;delimeter&gt;&lt;string&gt;&lt;delimeter&gt;
+        FCS &lt;delimiter&gt;&lt;string&gt;&lt;delimiter&gt;
 </listing>
 
 <h3 align="left"><a name="fcz">FCZ</a></h3>
@@ -452,7 +452,7 @@ Syntax:<br>
 <hr>
 <h2 align="left"><a name="opcodes">HCS12 Opcodes</a></h2>
 For a description of the HC(S)12 instruction set, please refer to the 
-<a href="http://e-www.motorola.com/brdata/PDFDB/docs/S12CPU15UG.pdf">HCS12 Core Guide</a>.<br>
+<a href="http://cache.freescale.com/files/microcontrollers/doc/data_sheet/HCS12COREUG.pdf">HCS12 Core Guide</a>.<br>
 All opcodes must comply to the following syntax rules:
 <listing>
 label name
@@ -470,7 +470,7 @@ V                         V
 
 <hr>
 <h2 align="left"><a name="output">Output Files</a></h2>
-The HSW12 assembler can generate tree output files:
+The HSW12 assembler can generate three output files:
 <dl>
 <dt><b>A Code Listing</b></dt>
 <dd>
@@ -480,14 +480,14 @@ The Code Listing shows the assembler source together with the associated hex cod
 </dd>
 <dt><b>A Paged S-Record File</b></dt>
 <dd>
-The hex code of the paged address domain (paged program counter) in Motorolas S-Record format.<br>
+The hex code of the paged address domain (paged program counter) in Motorola's S-Record format.<br>
 Paged addresses consist of an 8-bit page value (PPAGE register, MSB) and a 16-bit address value (PC register, LSB) =>PPAGE:ADDR.
 <br>
 <br>
 </dd>
 <dt><b>A Linear S-Record File</b></dt>
 <dd>
-The hex code of the linear address domain (linear program counter) in Motorolas S-Record format.<br>
+The hex code of the linear address domain (linear program counter) in Motorola's S-Record format.<br>
 Linear addresses are equivalent to the physical address space of the NVMs inside the HC(S)12 MCUs.
 <br>
 <br>
