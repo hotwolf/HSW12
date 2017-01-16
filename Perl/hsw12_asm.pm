@@ -6,7 +6,7 @@
 # author:  Dirk Heisswolf                                                        #
 # purpose: This is the core of the HSW12 Assembler                               #
 ##################################################################################
-# Copyright (C) 2003-2016 by Dirk Heisswolf. All rights reserved.                #
+# Copyright (C) 2003-2017 by Dirk Heisswolf. All rights reserved.                #
 # This file is part of "HSW12". HSW12 is free software;                          #
 # you can redistribute it and/or modify it under the same terms as Perl itself.  #
 ##################################################################################
@@ -368,6 +368,10 @@ Dirk Heisswolf
 =item V00.55 - Dec 09, 2016
  -Reduced comment clutter in list files. Comments separated by a blanc line
   are no longer associated with the following instruction.
+
+=item V00.56 - Jan 16, 2017
+ -added pseudo-opcode FCZ, to generate strings which are terminated by
+  appending a zero character
 
 =cut
 
@@ -3082,6 +3086,7 @@ if ($^O =~ /MSWin/i) {
                     "FCB"      => \&psop_db,
                     "FCC"      => \&psop_fcc,
                     "FCS"      => \&psop_fcs,
+                    "FCZ"      => \&psop_fcz,
                     "FDB"      => \&psop_dw,
                     "FILL"     => \&psop_fill,
                     "FLET16"   => \&psop_flet16, #Fletcher-16 checksum generation
@@ -7242,6 +7247,78 @@ sub psop_fcs {
         # syntax error #
         ################
         $error = sprintf("invalid argument for pseudo opcode FCS (%s)",$code_args);
+        $code_entry->[10] = [@{$code_entry->[10]}, $error];
+        $$error_count_ref++;
+    }
+}
+
+############
+# psop_fcz #
+############
+sub psop_fcz {
+    my $self            = shift @_;
+    my $pc_lin_ref      = shift @_;
+    my $pc_pag_ref      = shift @_;
+    my $loc_cnt_ref     = shift @_;
+    my $error_count_ref = shift @_;
+    my $undef_count_ref = shift @_;
+    my $label_value_ref = shift @_;
+    my $code_entry      = shift @_;
+
+    #arguments
+    my $code_args;
+    my $string;
+    my $first_char;
+    #hex code
+    my $char;
+    my @hex_code;
+    #temporary
+
+    ##################
+    # read arguments #
+    ##################
+    $code_args  = $code_entry->[5];
+
+    ##################
+    # check argument #
+    ##################
+    if ($code_args =~ /$psop_string/) {
+        $string = $1;
+
+        #trim string
+        $string =~ s/^\s*//;
+        $string =~ s/\s*$//;
+
+        #trim first character
+        $string     =~ s/^(.)//;
+        $first_char = $1;
+
+        #trim send of string
+        if ($string =~ /^(.*)$first_char/) {$string = $1;}
+        #printf STDERR "fcs: \"%s\" \"%s\"\n", $first_char, $string;
+
+        #convert string
+        @hex_code = ();
+        foreach $char (split //, $string) {
+            push @hex_code, sprintf("%.2X", ord($char));
+            if (defined $$pc_lin_ref) {$$pc_lin_ref++;}
+            if (defined $$pc_pag_ref) {$$pc_pag_ref++;}
+        }
+
+        #append zero termination
+	push @hex_code, sprintf("%.2X", 0);
+	if (defined $$pc_lin_ref) {$$pc_lin_ref++;}
+	if (defined $$pc_pag_ref) {$$pc_pag_ref++;}
+
+        #set hex code and byte count
+        $code_entry->[8] = join " ", @hex_code;
+        $code_entry->[9] = ($#hex_code + 1);
+
+    } else {
+        ################
+        # syntax error #
+        ################
+        $error = sprintf("invalid argument for pseudo opcode FCZ (%s)",$code_args);
         $code_entry->[10] = [@{$code_entry->[10]}, $error];
         $$error_count_ref++;
     }

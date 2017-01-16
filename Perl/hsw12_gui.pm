@@ -208,7 +208,7 @@ use File::Basename;
 # version #
 ###########
 *version = \"00.21";#"
-*release = \"00.65";#"
+*release = \"00.66";#"
 
 #####################
 # macro expressions #
