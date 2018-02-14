@@ -100,7 +100,7 @@ $arg_type          = "src";
 $srec_format       = $hsw12_asm::srec_def_format;
 $srec_data_length  = $hsw12_asm::srec_def_data_length;
 $srec_add_s5       = $hsw12_asm::srec_def_add_s5;
-$srec_word_entries = 1;
+$srec_alignment    = $hsw12_asm::srec_def_alignment;
 $symbols           = {};
 $code              = {};
 
@@ -242,7 +242,7 @@ if ($code->{problems}) {
 					    $srec_format,
 					    $srec_data_length,
 					    $srec_add_s5,
-					    $srec_word_entries);
+					    $srec_alignment);
 	print FILEHANDLE $out_string;
 	close FILEHANDLE;
     } else {
@@ -259,7 +259,7 @@ if ($code->{problems}) {
 					    $srec_format,
 					    $srec_data_length,
 					    $srec_add_s5,
-					    $srec_word_entries);
+					    $srec_alignment);
 	print FILEHANDLE $out_string;
 	close FILEHANDLE;
     } else {

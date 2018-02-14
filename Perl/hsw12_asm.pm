@@ -6,7 +6,7 @@
 # author:  Dirk Heisswolf                                                        #
 # purpose: This is the core of the HSW12 Assembler                               #
 ##################################################################################
-# Copyright (C) 2003-2017 by Dirk Heisswolf. All rights reserved.                #
+# Copyright (C) 2003-2018 by Dirk Heisswolf. All rights reserved.                #
 # This file is part of "HSW12". HSW12 is free software;                          #
 # you can redistribute it and/or modify it under the same terms as Perl itself.  #
 ##################################################################################
@@ -71,42 +71,27 @@ This module provides subroutines to...
                                   $srec_format,
                                   $srec_length,
                                   $s5,
-                                  $fill_bytes)
+                                  $alignment)
 
  Returns a linear S-Record of the compiled code (string).
  This method requires five arguments:
      1. $string:      S0 header                        (string)
      2. $srec_format: address format: S19, S28, or S37 (string)
      3. $srec_length: number of data bytes in S-Record (integer)
-     4. $fill_bytes:  add fill bytes                   (boolean)
+     4. $alignment:   phrase size to align S-record to (integer)
 
 =item $asm_object->print_pag_srec($string,
                                   $srec_format,
                                   $srec_length,
                                   $s5,
-                                  $fill_bytes)
+                                  $alignment)
 
  Returns a paged S-Record of the compiled code (string).
  This method requires five arguments:
      1. $string:      S0 header                        (string)
      2. $srec_format: address format: S19, S28, or S37 (string)
      3. $srec_length: number of data bytes in S-Record (integer)
-     4. $fill_bytes:  add fill bytes                   (boolean)
-
-=item $asm_object->print_pag_srec($string,
-                                  $srec_format,
-                                  $srec_length,
-                                  $s5,
-                                  $fill_bytes)
-
- Returns a paged S-Record of the compiled code (string).
- This method requires five arguments:
-     1. $string:      S0 header                        (string)
-     2. $srec_format: address format: S19, S28, or S37 (string)
-     3. $srec_length: number of data bytes in S-Record (integer)
-     4. $fill_bytes:  add fill bytes                   (boolean)
-
-=back
+     4. $alignment:   phrase size to align S-record to (integer)
 
 =head2 Misc
 
@@ -366,13 +351,20 @@ Dirk Heisswolf
   step may have a different compile order then the remaining compile steps  
 
 =item V00.55 - Dec 09, 2016
- -Reduced comment clutter in list files. Comments separated by a blanc line
+ -reduced comment clutter in list files. Comments separated by a blanc line
   are no longer associated with the following instruction.
 
 =item V00.56 - Jan 16, 2017
  -added pseudo-opcode FCZ, to generate strings which are terminated by
   appending a zero character
 
+=item V00.57 - Feb 14, 2018
+ -updated insertion of S5-records:
+     -S5 records will be inserted by default. 
+     -Each S5 record now shows the number of S1/2/3 records after the initial S0-record.
+      (Previously the count was reset after each S5 record)
+ -enhanced fill byte option in S-record generation (now alinment to phrases > 1 byte supported)     
+  
 =cut
 
 #################
@@ -420,15 +412,16 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.55";#"
+*version = \"00.57";#"
 
 #############################
 # default S-record settings #
 #############################
 *srec_def_format      = \"S28";#"
 *srec_def_data_length = \64;
-*srec_def_add_s5      = \0;
+*srec_def_add_s5      = \64;
 *srec_def_fill_byte   = \0xff;
+*srec_def_alignment   = \8;
 
 ###################
 # path delimeters #
@@ -5514,12 +5507,12 @@ sub print_lin_srec {
     my $srec_format       = shift @_;
     my $srec_data_length  = shift @_;
     my $srec_add_s5       = shift @_;
-    my $srec_word_entries = shift @_;
+    my $srec_alignment    = shift @_;
 
     #S-records
     my $srec_count;
     my @srec_bytes;
-    my $srec_address;
+    my $srec_addr;
     #memoryspace
     my $mem_addr;
     my $mem_entry;
@@ -5546,141 +5539,120 @@ sub print_lin_srec {
         $mem_entry = $self->{lin_addrspace}->{$mem_addr};
         $mem_byte  = $mem_entry->[0];
 
-
         #printf STDERR "address: %X\n", $mem_addr;
         if ($#srec_bytes < 0) {
             ##########################
             # new group of S-records #
             ##########################
             #print STDERR "new S-Record\n";
-            if ($srec_word_entries && ($mem_addr & 1)) {
-                ######################################
-                # odd start address => add fill byte #
-                ######################################
-                #print STDERR "  => odd start address!\n";
-                $srec_address = $mem_addr - 1;
-                push @srec_bytes, $srec_def_fill_byte;
-                push @srec_bytes, $mem_byte;
-            } else {
-                ######################
-                # even start address #
-                ######################
-                #print STDERR "  => even start address!\n";
-                $srec_address = $mem_addr;
-                push @srec_bytes, $mem_byte;
-            }
-        } elsif ($mem_addr == ($srec_address + $#srec_bytes + 1)) {
+	    $srec_addr = $mem_addr;
+            if ($srec_alignment > 1) {
+		#add fill bytes
+		while (($srec_addr % $srec_alignment) > 0) {
+		    $srec_addr--;
+		    push @srec_bytes, $srec_def_fill_byte;
+		}
+	    }
+	    push @srec_bytes, $mem_byte;
+        } elsif ($mem_addr == ($srec_addr + $#srec_bytes + 1)) {
             #######################################
             # add data byte to group of S-records #
             #######################################
-            #printf STDERR "  => add byte (%X %X)\n", $srec_address, ($#srec_bytes + 1);
+            #printf STDERR "  => add byte (%X %X)\n", $srec_addr, ($#srec_bytes + 1);
             push @srec_bytes, $mem_byte;
-        } elsif ($srec_word_entries &&
-                 ($mem_addr == ($srec_address + $#srec_bytes + 2))) {
-            ####################################################
-            # add one fill byte and data to group of S-records #
-            ####################################################
-            #printf STDERR "  => add 1 fill byte (%X %X)\n", $srec_address, ($#srec_bytes + 1);
-            push @srec_bytes, $srec_def_fill_byte;
-            push @srec_bytes, $mem_byte;
-        } elsif ($srec_word_entries &&
-                 ($mem_addr & 1) &&
-                 ($mem_addr == ($srec_address + $#srec_bytes + 3))) {
-            #####################################################
-            # add two fill bytes and data to group of S-records #
-            #####################################################
-            #printf STDERR "  => add 2 fill bytes (%X %X)\n", $srec_address, ($#srec_bytes + 1);
-            push @srec_bytes, $srec_def_fill_byte;
-            push @srec_bytes, $srec_def_fill_byte;
-            push @srec_bytes, $mem_byte;
+        } elsif (($srec_alignment > 1) &&                               #phrase alignment is enabled
+		 ((int($mem_addr/$srec_alignment) ==                    #gap within one phrase
+		   int(($srec_addr+$#srec_bytes+1)/$srec_alignment)) ||
+		  (int($mem_addr/$srec_alignment) ==                    #gap across two phrases
+		   int((($srec_addr+$#srec_bytes+1)/$srec_alignment)+1)))) {
+	    #################################################
+            # add disjoined data byte to group of S-records #
+            #################################################
+	    while ($mem_addr > ($srec_addr + $#srec_bytes + 1)) {
+		push @srec_bytes, $srec_def_fill_byte;
+	    }
+	    push @srec_bytes, $mem_byte;
         } else {
             ############################
             # print group of S-records #
             ############################
-            if ($srec_word_entries && (($#srec_bytes + 1) & 1)) {
-                ############################################
+	    while (($srec_alignment > 1) &&
+		   ((($srec_addr+$#srec_bytes+1)%$srec_alignment) > 0)) {
+		############################################
                 # add fill byte at the end of the S-Record #
                 ############################################
                 #printf STDERR "  => add ending fill bytes (%X)\n", ($#srec_bytes + 1);
                 push @srec_bytes, $srec_def_fill_byte;
-            }
+	    }
             while ($#srec_bytes >= 0) {
                 if (($#srec_bytes + 1) <= $srec_data_length) {
-                    $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_address,
+                    $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_addr,
                                                                         \@srec_bytes,
                                                                         $srec_format));
                     @srec_bytes = ();
                 } else {
-                    $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_address,
+                    $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_addr,
                                                                         [splice(@srec_bytes, 0,
                                                                                 $srec_data_length)],
                                                                         $srec_format));
-                    $srec_address = $srec_address + $srec_data_length;
+                    $srec_addr = $srec_addr + $srec_data_length;
                 }
                 $srec_count++;
                 if (($srec_add_s5 > 0) &&
-                    ($srec_add_s5 <= $srec_count)) {
+                    ($srec_count%$srec_add_s5 == 0)) {
                     $out_string .= sprintf("%s\n", $self->gen_s5rec($srec_count));
-                    $srec_count = 0;
                 }
             }
             ##########################
             # new group of S-records #
             ##########################
             #print STDERR "next S-Record\n";
-            if ($srec_word_entries && ($mem_addr & 1)) {
-                ######################################
-                # odd start address => add fill byte #
-                ######################################
-                #print STDERR "  => odd start address!\n";
-                $srec_address = $mem_addr - 1;
-                push @srec_bytes, $srec_def_fill_byte;
-                push @srec_bytes, $mem_byte;
-            } else {
-                ######################
-                # even start address #
-                ######################
-                #print STDERR "  => even start address!\n";
-                $srec_address = $mem_addr;
-                push @srec_bytes, $mem_byte;
-            }
+  	    $srec_addr = $mem_addr;
+            if ($srec_alignment > 1) {
+		#add fill bytes
+		while (($srec_addr % $srec_alignment) > 0) {
+		    $srec_addr--;
+		    push @srec_bytes, $srec_def_fill_byte;
+		}
+	    }
+	    push @srec_bytes, $mem_byte;
         }
     }
     #############################
     # print remaining S-records #
     #############################
-    if ($srec_word_entries && (($#srec_bytes + 1) & 1)) {
-        ############################################
-        # add fill byte at the end of the S-Record #
-        ############################################
-        #printf STDERR "  => add ending fill bytes (%X)\n", ($#srec_bytes + 1);
-        push @srec_bytes, $srec_def_fill_byte;
+    while (($srec_alignment > 1) &&
+	   ((($srec_addr+$#srec_bytes+1)%$srec_alignment) > 0)) {
+	############################################
+	# add fill byte at the end of the S-Record #
+	############################################
+	#printf STDERR "  => add ending fill bytes (%X)\n", ($#srec_bytes + 1);
+	push @srec_bytes, $srec_def_fill_byte;
     }
     while ($#srec_bytes >= 0) {
         if (($#srec_bytes + 1) <= $srec_data_length) {
-            $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_address,
+            $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_addr,
                                                                 \@srec_bytes,
                                                                 $srec_format));
             @srec_bytes = ();
         } else {
-            $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_address,
+            $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_addr,
                                                                 [splice(@srec_bytes, 0,
                                                                         $srec_data_length)],
                                                                 $srec_format));
-            $srec_address = $srec_address + $srec_data_length;
+            $srec_addr = $srec_addr + $srec_data_length;
         }
         $srec_count++;
         if (($srec_add_s5 > 0) &&
-            ($srec_add_s5 <= $srec_count)) {
+	    ($srec_count%$srec_add_s5 == 0)) {
             $out_string .= sprintf("%s\n", $self->gen_s5rec($srec_count));
-            $srec_count = 0;
         }
     }
     ####################################
     # print S5 for remaining S-records #
     ####################################
     if (($srec_add_s5 > 0) &&
-        ($srec_count  > 0)) {
+	($srec_count%$srec_add_s5 > 0)) {
         $out_string .= sprintf("%s\n", $self->gen_s5rec($srec_count));
     }
 
@@ -5700,12 +5672,12 @@ sub print_pag_srec {
     my $srec_format       = shift @_;
     my $srec_data_length  = shift @_;
     my $srec_add_s5       = shift @_;
-    my $srec_word_entries = shift @_;
+    my $srec_alignment    = shift @_;
 
     #S-records
     my $srec_count;
     my @srec_bytes;
-    my $srec_address;
+    my $srec_addr;
     #memoryspace
     my $mem_addr;
     my $mem_entry;
@@ -5738,134 +5710,114 @@ sub print_pag_srec {
             # new group of S-records #
             ##########################
             #print STDERR "new S-Record\n";
-            if ($srec_word_entries && ($mem_addr & 1)) {
-                ######################################
-                # odd start address => add fill byte #
-                ######################################
-                #print STDERR "  => odd start address!\n";
-                $srec_address = $mem_addr - 1;
-                push @srec_bytes, $srec_def_fill_byte;
-                push @srec_bytes, $mem_byte;
-            } else {
-                ######################
-                # even start address #
-                ######################
-                #print STDERR "  => even start address!\n";
-                $srec_address = $mem_addr;
-                push @srec_bytes, $mem_byte;
-            }
-        } elsif ($mem_addr == ($srec_address + $#srec_bytes + 1)) {
+ 	    $srec_addr = $mem_addr;
+            if ($srec_alignment > 1) {
+		#add fill bytes
+		while (($srec_addr % $srec_alignment) > 0) {
+		    $srec_addr--;
+		    push @srec_bytes, $srec_def_fill_byte;
+		}
+	    }
+	    push @srec_bytes, $mem_byte;
+        } elsif ($mem_addr == ($srec_addr + $#srec_bytes + 1)) {
             #######################################
             # add data byte to group of S-records #
             #######################################
-            #printf STDERR "  => add byte (%X %X)\n", $srec_address, ($#srec_bytes + 1);
+            #printf STDERR "  => add byte (%X %X)\n", $srec_addr, ($#srec_bytes + 1);
             push @srec_bytes, $mem_byte;
-        } elsif ($srec_word_entries &&
-                 ($mem_addr == ($srec_address + $#srec_bytes + 2))) {
-            ####################################################
-            # add one fill byte and data to group of S-records #
-            ####################################################
-            #printf STDERR "  => add 1 fill byte (%X %X)\n", $srec_address, ($#srec_bytes + 1);
-            push @srec_bytes, $srec_def_fill_byte;
-            push @srec_bytes, $mem_byte;
-        } elsif ($srec_word_entries &&
-                 ($mem_addr & 1) &&
-                 ($mem_addr == ($srec_address + $#srec_bytes + 3))) {
-            #####################################################
-            # add two fill bytes and data to group of S-records #
-            #####################################################
-            #printf STDERR "  => add 2 fill bytes (%X %X)\n", $srec_address, ($#srec_bytes + 1);
-            push @srec_bytes, $srec_def_fill_byte;
-            push @srec_bytes, $srec_def_fill_byte;
-            push @srec_bytes, $mem_byte;
+        } elsif (($srec_alignment > 1) &&                               #phrase alignment is enabled
+		 ((int($mem_addr/$srec_alignment) ==                    #gap within one phrase
+		   int(($srec_addr+$#srec_bytes)/$srec_alignment)) ||
+		  (int($mem_addr/$srec_alignment) ==                    #gap across two phrases
+		   int((($srec_addr+$#srec_bytes)/$srec_alignment)+1)))) {
+	    #################################################
+            # add disjoined data byte to group of S-records #
+            #################################################
+	    while ($mem_addr > ($srec_addr + $#srec_bytes + 1)) {
+		push @srec_bytes, $srec_def_fill_byte;
+	    }
+	    push @srec_bytes, $mem_byte;
         } else {
             ############################
             # print group of S-records #
             ############################
-            if ($srec_word_entries && (($#srec_bytes + 1) & 1)) {
-                ############################################
+ 	    while (($srec_alignment > 1) &&
+		   ((($srec_addr+$#srec_bytes+1)%$srec_alignment) > 0)) {
+		############################################
                 # add fill byte at the end of the S-Record #
                 ############################################
                 #printf STDERR "  => add ending fill bytes (%X)\n", ($#srec_bytes + 1);
                 push @srec_bytes, $srec_def_fill_byte;
-            }
+	    }
             while ($#srec_bytes >= 0) {
                 if (($#srec_bytes + 1) <= $srec_data_length) {
-                    $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_address,
+                    $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_addr,
                                                                         \@srec_bytes,
                                                                         $srec_format));
                     @srec_bytes = ();
                 } else {
-                    $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_address,
+                    $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_addr,
                                                                         [splice(@srec_bytes, 0,
                                                                                 $srec_data_length)],
                                                                         $srec_format));
-                    $srec_address = $srec_address + $srec_data_length;
+                    $srec_addr = $srec_addr + $srec_data_length;
                 }
                 $srec_count++;
                 if (($srec_add_s5 > 0) &&
-                    ($srec_add_s5 <= $srec_count)) {
+                    ($srec_count%$srec_add_s5 == 0)) {
                     $out_string .= sprintf("%s\n", $self->gen_s5rec($srec_count));
-                    $srec_count = 0;
                 }
             }
             ##########################
             # new group of S-records #
             ##########################
             #print STDERR "next S-Record\n";
-            if ($srec_word_entries && ($mem_addr & 1)) {
-                ######################################
-                # odd start address => add fill byte #
-                ######################################
-                #print STDERR "  => odd start address!\n";
-                $srec_address = $mem_addr - 1;
-                push @srec_bytes, $srec_def_fill_byte;
-                push @srec_bytes, $mem_byte;
-            } else {
-                ######################
-                # even start address #
-                ######################
-                #print STDERR "  => even start address!\n";
-                $srec_address = $mem_addr;
-                push @srec_bytes, $mem_byte;
-            }
+  	    $srec_addr = $mem_addr;
+            if ($srec_alignment > 1) {
+		#add fill bytes
+		while (($srec_addr % $srec_alignment) > 0) {
+		    $srec_addr--;
+		    push @srec_bytes, $srec_def_fill_byte;
+		}
+	    }
+	    push @srec_bytes, $mem_byte;
         }
     }
     #############################
     # print remaining S-records #
     #############################
-    if ($srec_word_entries && (($#srec_bytes + 1) & 1)) {
-        ############################################
-        # add fill byte at the end of the S-Record #
-        ############################################
-        #printf STDERR "  => add ending fill bytes (%X)\n", ($#srec_bytes + 1);
-        push @srec_bytes, $srec_def_fill_byte;
+    while (($srec_alignment > 1) &&
+	   ((($srec_addr+$#srec_bytes+1)%$srec_alignment) > 0)) {
+	############################################
+	# add fill byte at the end of the S-Record #
+	############################################
+	#printf STDERR "  => add ending fill bytes (%X)\n", ($#srec_bytes + 1);
+	push @srec_bytes, $srec_def_fill_byte;
     }
     while ($#srec_bytes >= 0) {
         if (($#srec_bytes + 1) <= $srec_data_length) {
-            $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_address,
+            $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_addr,
                                                                 \@srec_bytes,
                                                                 $srec_format));
             @srec_bytes = ();
         } else {
-            $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_address,
+            $out_string .= sprintf("%s\n", $self->gen_data_srec($srec_addr,
                                                                 [splice(@srec_bytes, 0,
                                                                         $srec_data_length)],
                                                                 $srec_format));
-            $srec_address = $srec_address + $srec_data_length;
+            $srec_addr = $srec_addr + $srec_data_length;
         }
         $srec_count++;
         if (($srec_add_s5 > 0) &&
-            ($srec_add_s5 <= $srec_count)) {
+            ($srec_count%$srec_add_s5 == 0)) {
             $out_string .= sprintf("%s\n", $self->gen_s5rec($srec_count));
-            $srec_count = 0;
         }
     }
     ####################################
     # print S5 for remaining S-records #
     ####################################
     if (($srec_add_s5 > 0) &&
-        ($srec_count          > 0)) {
+        ($srec_count%$srec_add_s5 > 0)) {
         $out_string .= sprintf("%s\n", $self->gen_s5rec($srec_count));
     }
 
