@@ -538,7 +538,7 @@ sub reset_pod {
             
     } else {
       #can't open input handle
-      if (Exists $self->{terminal_window}) {
+      if (Tk::Exists $self->{terminal_window}) {
 	$self->{terminal_window}->insert('end', 
 					 sprintf("Error! Can't read from device \"%s\" (%s)\n", $device, $!),
 					 $hsw12_gui::terminal_tag_error);
@@ -554,7 +554,7 @@ sub reset_pod {
     
   } else {
     #can't open output handle
-    if (Exists $self->{terminal_window}) {
+    if (Tk::Exists $self->{terminal_window}) {
       $self->{terminal_window}->insert('end', 
 				       sprintf("Error! Can't write to device \"%s\" (%s)\n", $device, $!),
 				       $hsw12_gui::terminal_tag_error);	
@@ -566,7 +566,7 @@ sub reset_pod {
     $self->{device} = undef;
     return 0;
   }
-  if (Exists $self->{terminal_window}) {
+  if (Tk::Exists $self->{terminal_window}) {
     $self->{terminal_window}->insert('end', 
 				     sprintf("Connected to device \"%s\"\n", $device),
 				     $hsw12_gui::terminal_tag_info);	
@@ -652,7 +652,7 @@ sub set_baud_rate {
 
     if ($!) {	
       #can't set baud rate
-      if (Exists $self->{terminal_window}) {
+      if (Tk::Exists $self->{terminal_window}) {
 	$self->{terminal_window}->insert('end', 
 					 sprintf("Error! Can't set baud rate on device \"%s\" (%s)\n", $device, $!),
 					 $hsw12_gui::terminal_tag_error);	
@@ -664,7 +664,7 @@ sub set_baud_rate {
       $self->{baud_rate} = undef;
       return 0;
     } else {
-      if (Exists $self->{terminal_window}) {
+      if (Tk::Exists $self->{terminal_window}) {
 	$self->{terminal_window}->insert('end', 
 					 sprintf("Device \"%s\" set to %d baud\n", $device, $baud_rate),
 					 $hsw12_gui::terminal_tag_info);	
@@ -676,7 +676,7 @@ sub set_baud_rate {
     }
   } else {
     #not connected
-    if (Exists $self->{terminal_window}) {
+    if (Tk::Exists $self->{terminal_window}) {
       $self->{terminal_window}->insert('end', 
 				       "Error! Not connected\n",
 				       $hsw12_gui::terminal_tag_error);	
@@ -721,7 +721,7 @@ sub parse_input_stream {
 	#append data to input string
 	$self->{input_string} .= $data;
 	#print data into terminal window
-	if (Exists $self->{terminal_window}) {
+	if (Tk::Exists $self->{terminal_window}) {
 	    foreach $char (split //, $data) {
 		if ($char =~ /^[\x20-\x7e\s]$/) {
 		    #display one character
@@ -745,7 +745,7 @@ sub parse_input_stream {
 	
 	if (! defined $bytes) {
 	    #read error
-	    if (Exists $self->{terminal_window}) {
+	    if (Tk::Exists $self->{terminal_window}) {
 		$self->{terminal_window}->insert('end', 
 						 sprintf("Error! Can't read from device \"%s\" (%s)\n", $self->{device}, $!),
 						 $hsw12_gui::terminal_tag_error);

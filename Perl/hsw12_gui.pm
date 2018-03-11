@@ -979,7 +979,7 @@ sub main_window_load_source_code_cmd {
         $self->{gui}->{main}->Busy(-recurse => 1);
 	$self->{session}->{source_file} = $file_name;
 	#assemble code
-	if (Exists $self->{gui}->{source_code}->{text_text}) {
+	if (Tk::Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
 	    $self->{session}->{code} = hsw12_asm->new([$file_name], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
 	} else {
@@ -1009,7 +1009,7 @@ sub main_window_recompile_source_code_cmd {
 
     if (exists $self->{session}->{code}->{problems}) {
         $self->{gui}->{main}->Busy(-recurse => 1);
-	if (Exists $self->{gui}->{source_code}->{text_text}) {
+	if (Tk::Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
 	    $self->{session}->{code}->reload(0);
 	} else {
@@ -1164,7 +1164,7 @@ sub main_window_import_linear_s12_srecord_cmd {
         $self->{gui}->{main}->Busy(-recurse => 1);
 	$self->{session}->{source_file} = $file_name;
 	#assemble code
-	if (Exists $self->{gui}->{source_code}->{text_text}) {
+	if (Tk::Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
 	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12, 0);
 	} else {
@@ -1203,7 +1203,7 @@ sub main_window_import_paged_s12_srecord_cmd {
         $self->{gui}->{main}->Busy(-recurse => 1);
 	$self->{session}->{source_file} = $file_name;
 	#assemble code
-	if (Exists $self->{gui}->{source_code}->{text_text}) {
+	if (Tk::Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
 	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12, 0);
 	} else {
@@ -1242,7 +1242,7 @@ sub main_window_import_linear_s12x_srecord_cmd {
         $self->{gui}->{main}->Busy(-recurse => 1);
 	$self->{session}->{source_file} = $file_name;
 	#assemble code
-	if (Exists $self->{gui}->{source_code}->{text_text}) {
+	if (Tk::Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
 	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_lin_s12x, 0);
 	} else {
@@ -1281,7 +1281,7 @@ sub main_window_import_paged_s12x_srecord_cmd {
         $self->{gui}->{main}->Busy(-recurse => 1);
 	$self->{session}->{source_file} = $file_name;
 	#assemble code
-	if (Exists $self->{gui}->{source_code}->{text_text}) {
+	if (Tk::Exists $self->{gui}->{source_code}->{text_text}) {
 	    #use source code window
 	    $self->{session}->{code} = hsw12_srec_import->new($file_name, $hsw12_srec_import::srec_type_pag_s12x, 0);
 	} else {
@@ -4475,7 +4475,7 @@ sub restore_session {
 	    ########################
 	    #$file_name = $self->{session}->{source_file};
 	    #if ($file_name !~ /^\s*$/) {
-	    #	if (Exists $self->{gui}->{source_code}->{text_text}) {
+	    #	if (Tk::Exists $self->{gui}->{source_code}->{text_text}) {
 	    #	    #use source code window
 	    #	    $self->{session}->{code} = hsw12_asm->new([$self->{session}->{source_file}], [sprintf("%s/", dirname($file_name)), "./"], {}, "S12", 0);
 	    #	} else {
@@ -4676,7 +4676,7 @@ sub geometry_callback {
     ##########################
     # window must have focus #
     ##########################
-    if (Exists $window->focusCurrent()) {
+    if (Tk::Exists $window->focusCurrent()) {
       if ($window == $window->focusCurrent()->toplevel()) {
 
 	##############################
@@ -4736,7 +4736,7 @@ sub geometry_callback {
 		  $self->{session}->{gui}->{terminal}->{geometry} = $self->adjust_position($self->{session}->{gui}->{terminal}->{geometry}, 
 											   $diff_x, 
 											   $diff_y);
-		  if (Exists $self->{gui}->{terminal}->{toplevel}) {
+		  if (Tk::Exists $self->{gui}->{terminal}->{toplevel}) {
 		    $self->{gui}->{terminal}->{toplevel}->geometry($self->{session}->{gui}->{terminal}->{geometry});
 		  }
 		}
@@ -4748,7 +4748,7 @@ sub geometry_callback {
 		  $self->{session}->{gui}->{source_code}->{geometry} = $self->adjust_position($self->{session}->{gui}->{source_code}->{geometry}, 
 											      $diff_x, 
 											      $diff_y);
-		  if (Exists $self->{gui}->{source_code}->{toplevel}) {
+		  if (Tk::Exists $self->{gui}->{source_code}->{toplevel}) {
 		    $self->{gui}->{source_code}->{toplevel}->geometry($self->{session}->{gui}->{source_code}->{geometry});
 		  }
 		}
@@ -4760,7 +4760,7 @@ sub geometry_callback {
 		  $self->{session}->{gui}->{variables}->{geometry} = $self->adjust_position($self->{session}->{gui}->{variables}->{geometry}, 
 											    $diff_x,
 											    $diff_y);
-		  if (Exists $self->{gui}->{variables}->{toplevel}) {
+		  if (Tk::Exists $self->{gui}->{variables}->{toplevel}) {
 		    $self->{gui}->{variables}->{toplevel}->geometry($self->{session}->{gui}->{variables}->{geometry});
 		  }
 		}
@@ -4772,7 +4772,7 @@ sub geometry_callback {
 		  $self->{session}->{gui}->{registers}->{geometry} = $self->adjust_position($self->{session}->{gui}->{registers}->{geometry}, 
 											    $diff_x,
 											    $diff_y);
-		  if (Exists $self->{gui}->{registers}->{toplevel}) {
+		  if (Tk::Exists $self->{gui}->{registers}->{toplevel}) {
 		    $self->{gui}->{registers}->{toplevel}->geometry($self->{session}->{gui}->{registers}->{geometry});
 		  }
 		}
@@ -4784,7 +4784,7 @@ sub geometry_callback {
 		  $self->{session}->{gui}->{control}->{geometry} = $self->adjust_position($self->{session}->{gui}->{control}->{geometry}, 
 											  $diff_x,
 											  $diff_y);
-		  if (Exists $self->{gui}->{control}->{toplevel}) {
+		  if (Tk::Exists $self->{gui}->{control}->{toplevel}) {
 		    $self->{gui}->{control}->{toplevel}->geometry($self->{session}->{gui}->{control}->{geometry});
 		  }
 		}
@@ -4803,7 +4803,7 @@ sub show_error_message {
     my $self   = shift @_;
     my $string = shift @_;
 
-    if (Exists $self->{gui}->{main}) {
+    if (Tk::Exists $self->{gui}->{main}) {
 	$self->{gui}->{main}->messageBox(-title   => "Error!",
 					 -message => sprintf("Error! %s", $string),
 					 -type    => 'OK');
@@ -5002,7 +5002,7 @@ sub evaluate_macro {
 		if ($macro_flags & $macro_allow_recompile) {
 		    if (exists $self->{session}->{code}->{problems}) {
 			$self->{gui}->{main}->Busy(-recurse => 1);
-			if (Exists $self->{gui}->{source_code}->{text_text}) {
+			if (Tk::Exists $self->{gui}->{source_code}->{text_text}) {
 			  #use source code window
 			  $self->{session}->{code}->reload(0);
 			} else {
