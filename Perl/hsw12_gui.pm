@@ -1546,7 +1546,11 @@ sub create_terminal_window {
 		$self->{gui}->{terminal}->{$macro_button->[0]}->{button}->grid(-column => $macro_button->[1],
 									       -row    => $macro_button->[2],
 									       -sticky => 'nsew');
-		$self->{gui}->{terminal}->{$macro_button->[0]}->{button}->bind('<ButtonRelease-3>', [\&terminal_define_macro_cmd, 
+		$self->{gui}->{terminal}->{$macro_button->[0]}->{button}->bind(
+												    $self->{gui}->{main}->windowingsystem eq 'aqua'
+												      ? '<ButtonRelease-2>'
+												      : '<ButtonRelease-3>' ,
+												    [\&terminal_define_macro_cmd, 
 												     $self, 
 												     $macro_button->[0]]);
 	    }
