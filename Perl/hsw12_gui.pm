@@ -161,6 +161,12 @@ r
 
  - permanently enabled scrollbars to workaround bug in 'o' option
  
+=item V00.22 - May 11, 2018
+
+ - use list of common baud rates
+   (add/enable commonly used ones, comment out others)
+ - use foreach loop to generate 'Preferences' > 'Terminal' > 'Speed' menu
+ 
 =back
 
 =cut
@@ -207,7 +213,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.21";#"
+*version = \"00.22";#"
 *release = \"00.67";#"
 
 #####################
@@ -570,62 +576,26 @@ sub create_main_window {
 	$self->{gui}->{menu}->{pref}->{term_baud_cascade} = 
 	    $self->{gui}->{menu}->{pref}->{term_cascade}->cascade(-label   => "Speed",
 								  -tearoff => 'false');
-	##term_baud_1536000
-	#$self->{gui}->{menu}->{pref}->{term_baud_153600} = 
-	#    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => "153600 baud",
-	#								    -variable    => \$self->{session}->{preferences}->{io}->{baud},
-	#								    -value       => "153600",
-	#								    -command     => [\&main_window_set_serial_speed_cmd, $self],
-	#								    -selectcolor => $self->{session}->{colors}->{dark_red});
-	##term_baud_76800
-	#$self->{gui}->{menu}->{pref}->{term_baud_76800} = 
-	#    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => "76800 baud",
-	#								    -variable    => \$self->{session}->{preferences}->{io}->{baud},
-	#								    -value       => "76800",
-	#								    -command     => [\&main_window_set_serial_speed_cmd, $self],
-	#								    -selectcolor => $self->{session}->{colors}->{dark_red});
-	#term_baud_38400
-	$self->{gui}->{menu}->{pref}->{term_baud_38400} = 
-	    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => "38400 baud",
-									   -variable    => \$self->{session}->{preferences}->{io}->{baud},
-									   -value       => "38400",
-									   -command     => [\&main_window_set_serial_speed_cmd, $self],
-									   -selectcolor => $self->{session}->{colors}->{dark_red});
-	#term_baud_19200
-	$self->{gui}->{menu}->{pref}->{term_baud_19200} = 
-	    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => "19200 baud",
-									   -variable    => \$self->{session}->{preferences}->{io}->{baud},
-									   -value       => "19200",
-									   -command     => [\&main_window_set_serial_speed_cmd, $self],
-									   -selectcolor => $self->{session}->{colors}->{dark_red});
-	#term_baud_9600
-	$self->{gui}->{menu}->{pref}->{term_baud_9600} = 
-	    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => " 9600 baud",
-									   -variable    => \$self->{session}->{preferences}->{io}->{baud},
-									   -value       => "9600",
-									   -command     => [\&main_window_set_serial_speed_cmd, $self],
-									   -selectcolor => $self->{session}->{colors}->{dark_red});
-	#term_baud_4800
-	$self->{gui}->{menu}->{pref}->{term_baud_4800} = 
-	    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => " 4800 baud",
-									   -variable    => \$self->{session}->{preferences}->{io}->{baud},
-									   -value       => "4800",
-									   -command     => [\&main_window_set_serial_speed_cmd, $self],
-									   -selectcolor => $self->{session}->{colors}->{dark_red});
-	#term_baud_2400
-	$self->{gui}->{menu}->{pref}->{term_baud_2400} = 
-	    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => " 2400 baud",
-									   -variable    => \$self->{session}->{preferences}->{io}->{baud},
-									   -value       => "2400",
-									   -command     => [\&main_window_set_serial_speed_cmd, $self],
-									   -selectcolor => $self->{session}->{colors}->{dark_red});
-	#term_baud_1200
-	$self->{gui}->{menu}->{pref}->{term_baud_1200} = 
-	    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => " 1200 baud",
-									   -variable    => \$self->{session}->{preferences}->{io}->{baud},
-									   -value       => "1200",
-									   -command     => [\&main_window_set_serial_speed_cmd, $self],
-									   -selectcolor => $self->{session}->{colors}->{dark_red});
+	my @baudrates = (
+		#1200,
+		#2400,
+		#4800,
+		9600,
+		19200,
+		38400,
+		57600,
+		#76800,
+		115200,
+		#1536000,
+	);
+	foreach my $baudrate (@baudrates) {
+		$self->{gui}->{menu}->{pref}->{"term_baud_$baudrate"} =
+		    $self->{gui}->{menu}->{pref}->{term_baud_cascade}->radiobutton(-label       => "$baudrate baud",
+									       -variable    => \$self->{session}->{preferences}->{io}->{baud},
+									       -value       => $baudrate,
+									       -command     => [\&main_window_set_serial_speed_cmd, $self],
+									       -selectcolor => $self->{session}->{colors}->{dark_red});
+	}
 	#separator
 	$self->{gui}->{menu}->{pref}->{mbutton}->separator;
 	#srec
