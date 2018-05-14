@@ -4636,7 +4636,7 @@ sub adjust_position {
 
     if ($geometry =~ /^=?(\d+)x(\d+)\+(-?\d+)\+(-?\d+)$/) {
 	$window_width  = $1;
-	$window_hight  = $2;
+	$window_height  = $2;
 	$window_xpos   = $3;
 	$window_ypos   = $4;
 	
@@ -4644,7 +4644,7 @@ sub adjust_position {
 	$ypos = $window_ypos + $diff_y;
 	
 	return sprintf("%dx%d+%d+%d", ($window_width,
-				       $window_hight,
+				       $window_height,
 				       $xpos,
 				       $ypos));
 	
