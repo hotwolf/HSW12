@@ -6247,6 +6247,8 @@ sub print_mem_alloc {
     my $lin_seg_end;	
     #output
     my $out_string;
+    #flag
+    my $first_segment;
 
     #############
     # code loop #
@@ -6289,7 +6291,7 @@ sub print_mem_alloc {
     $out_string  = "Variable Allocation:\n";
     $out_string .= "Paged             Linear\n";
     $out_string .= "---------------   ---------------\n";
-    my $first_segment = 1;
+    $first_segment = 1;
     foreach $cur_pag_addr (sort {$a <=> $b} keys %var_alloc) {
 	$cur_lin_addr = $var_alloc{$cur_pag_addr};
 	#printf STDERR "VAR: %X %X\n", $cur_pag_addr, $cur_lin_addr;
@@ -6345,7 +6347,7 @@ sub print_mem_alloc {
     $out_string .= "Code Allocation:\n";
     $out_string .= "Paged             Linear\n";
     $out_string .= "---------------   ---------------\n";
-    my $first_segment = 1;
+    $first_segment = 1;
     foreach $cur_pag_addr (sort {$a <=> $b} keys %code_alloc) {
 	$cur_lin_addr = $code_alloc{$cur_pag_addr};
 	#printf STDERR "CODE: %X %X\n", $cur_pag_addr, $cur_lin_addr;
