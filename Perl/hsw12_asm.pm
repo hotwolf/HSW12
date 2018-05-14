@@ -3341,7 +3341,6 @@ sub precompile {
     my @srccode_sequence;
     #temporary
     my $match;
-    my $error;
     my $value;
 
     #############
