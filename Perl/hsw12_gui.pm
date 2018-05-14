@@ -257,7 +257,6 @@ use File::Basename;
 *source_tag_comment    = \"comment";#"
 *source_tag_error      = \"error";#"
 *source_tag_highlight  = \"highlight";#"
-*source_tag_highlight  = \"highlight";#"
 
 ######################
 # terminal code tags #
