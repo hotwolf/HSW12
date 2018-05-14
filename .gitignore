@@ -38,3 +38,7 @@ Desktop DB
 
 #Ignore Platypus files
 *.platypus
+
+#Ignore Visual Studio Code files
+.vstags
+.vscode
