@@ -17,9 +17,9 @@ hsw12_gui - HSW12 Graphical User Interface
 
 =head1 SYNOPSIS
 
- require hsw12_gui
+ require hsw12_gui;
 
- $gui = hsw12_gui->new($file_name);
+ my $gui = hsw12_gui->new($file_name);
 
 =head1 REQUIRES
 

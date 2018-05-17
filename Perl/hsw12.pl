@@ -68,7 +68,7 @@ use FindBin qw($RealBin);
 use lib $RealBin;
 require hsw12_gui;
 
-$gui = hsw12_gui->new(shift @ARGV);
+my $gui = hsw12_gui->new(shift @ARGV);
 
 #print "MainLoop\n";
 MainLoop;
