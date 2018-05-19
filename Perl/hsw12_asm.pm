@@ -3187,7 +3187,7 @@ sub compile {
     my $file_list       = shift @_;
     my $library_list    = shift @_;
     my $initial_symbols = shift @_;
-    #compile staus
+    #compile status
     my $old_undef_count;
     my $new_undef_count;
     my $redef_count;
