@@ -6086,7 +6086,7 @@ sub print_lin_binary {
     ##########################
     # initialize output list #
     ##########################
-    $out_list = ();
+    @out_list = ();
 
     ################
     # address loop #
@@ -6126,7 +6126,7 @@ sub print_pag_binary {
     ##########################
     # initialize output list #
     ##########################
-    $out_list = ();
+    @out_list = ();
 
     ################
     # address loop #
