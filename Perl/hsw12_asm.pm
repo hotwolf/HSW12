@@ -4069,7 +4069,7 @@ sub compile_run {
     my $opcode_amode_check;
     my $opcode_amode_opcode;
     #macros
-    my $maro_name;
+    my $macro_name;
     my @macro_args;
     my $macro_argc;
     my @macro_comments;
@@ -4083,8 +4083,8 @@ sub compile_run {
     my $macro_arg;
     my $macro_arg_replace;
     my $macro_hierarchy;
-    my $maro_sym_tab;
-    my $maro_sym_tabs;
+    my $macro_sym_tab;
+    my $macro_sym_tabs;
     my $macro_symbol;
     my $macro_entries;
     my $macro_entry;
@@ -4299,12 +4299,12 @@ sub compile_run {
 	    $code_entry->[8] = "MACRO";
 
 	    #determine macro name
-	    $maro_name = uc($code_opcode);
+	    $macro_name = uc($code_opcode);
 
 	    #check for recursive macro call
 	    if (defined $code_macros) {
-		$result = grep {$maro_name eq $_} @$code_macros;
-		#printf "macros \"%s\", %b: %s\n", $maro_name, $result, join(", ", @$code_macros);
+		$result = grep {$macro_name eq $_} @$code_macros;
+		#printf "macros \"%s\", %b: %s\n", $macro_name, $result, join(", ", @$code_macros);
 	    } else {
 		$result = -1;
 	    }
@@ -4314,7 +4314,7 @@ sub compile_run {
 		#@macro_args = split($del, $code_args);
 	        @macro_args = ();
 		while ($code_args =~ /^[,\s]*(\([^\(\)]*?\)|\".*?\"|\'.*?\'|[^\s,]+)/) {
-		    #printf "macros args: \"%s\" (%d,%d) => %s\n", $code_args, $#macro_args, $self->{macro_argcs}->{$maro_name}, join(", ", @macro_args);
+		    #printf "macros args: \"%s\" (%d,%d) => %s\n", $code_args, $#macro_args, $self->{macro_argcs}->{$macro_name}, join(", ", @macro_args);
 		    my $code_arg = $1; #set current $code_arg 
 		    $code_args = $';#'  #remove current $code_arg from $code_args
 		    #remove parenthesis from $current $code_arg		
@@ -4323,35 +4323,35 @@ sub compile_run {
 		    }
 		    push @macro_args, $code_arg;
 		}
-		#printf "macros args: \"%s\" (%d,%d) => %s\n", $code_args, $#macro_args, $self->{macro_argcs}->{$maro_name}, join(", ", @macro_args);
-		if (($#macro_args+1) == $self->{macro_argcs}->{$maro_name}) {
+		#printf "macros args: \"%s\" (%d,%d) => %s\n", $code_args, $#macro_args, $self->{macro_argcs}->{$macro_name}, join(", ", @macro_args);
+		if (($#macro_args+1) == $self->{macro_argcs}->{$macro_name}) {
 		    #determine macro hierarchy
 		    if (defined $code_macros) {
-			$macro_hierarchy = [$maro_name, @$code_macros];
+			$macro_hierarchy = [$macro_name, @$code_macros];
 		    } else {
-			$macro_hierarchy = [$maro_name];
+			$macro_hierarchy = [$macro_name];
 		    }
 		    #printf "macros hierarchy: %s\n", join("/", @$macro_hierarchy);
 
 		    #create a new local symbol table
-		    $maro_sym_tab = {};
-		    foreach $macro_symbol (keys %{$self->{macro_symbols}->{$maro_name}}) {
-			$maro_sym_tab->{$macro_symbol} = undef;
+		    $macro_sym_tab = {};
+		    foreach $macro_symbol (keys %{$self->{macro_symbols}->{$macro_name}}) {
+			$macro_sym_tab->{$macro_symbol} = undef;
 			$undef_count++;
 		    }
-		    #printf "new macro table (%s): (%s) (%s)\n", $maro_name, join(",", keys %$maro_sym_tab), join(",", keys %{$self->{macro_symbols}->{$maro_name}});
+		    #printf "new macro table (%s): (%s) (%s)\n", $macro_name, join(",", keys %$macro_sym_tab), join(",", keys %{$self->{macro_symbols}->{$macro_name}});
 
 		    if (defined $code_sym_tabs) {
-			$macro_sym_tabs = [$maro_sym_tab, @$code_sym_tabs];
+			$macro_sym_tabs = [$macro_sym_tab, @$code_sym_tabs];
 		    } else {
-			$macro_sym_tabs = [$maro_sym_tab];
+			$macro_sym_tabs = [$macro_sym_tab];
 		    }
 		    #printf "macro tables (%s): (%s)\n", join("/", @$macro_hierarchy), ($#$macro_sym_tabs+1);
 
 		    #copy macro elements
-		    #printf "macros: %d\n", ($#{$self->{macros}->{$maro_name}}+1);
+		    #printf "macros: %d\n", ($#{$self->{macros}->{$macro_name}}+1);
 		    $macro_entries = []; 
-		    foreach $macro_entry (@{$self->{macros}->{$maro_name}}) {
+		    foreach $macro_entry (@{$self->{macros}->{$macro_name}}) {
 
 			#replace macro comments
 			@macro_comments = @{$macro_entry->[2]};
@@ -4362,7 +4362,7 @@ sub compile_run {
 			} else {
 			    $macro_comment_keep = "";
 			}
-			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
+			foreach $macro_argc (1..$self->{macro_argcs}->{$macro_name}) {
 			    $macro_comment_replace = $macro_args[$macro_argc-1];
 			    $macro_comment =~ s/\\$macro_argc/$macro_comment_replace/g;
 			    #printf "replace macro comment: %d \"%s\" => \"%s\"\n", $macro_argc, $macro_comment_replace, $macro_comment;
@@ -4371,7 +4371,7 @@ sub compile_run {
 			
 			#replace macro label
 			$macro_label = $macro_entry->[3];
-			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
+			foreach $macro_argc (1..$self->{macro_argcs}->{$macro_name}) {
 			    $macro_label_replace = $macro_args[$macro_argc-1];
 			    $macro_label =~ s/\\$macro_argc/$macro_label_replace/g;
 			    #printf "replace macro label: %d \"%s\", \"%s\" => \"%s\"\n", $macro_argc, $macro_entry->[3], $macro_label_replace, $macro_label;
@@ -4379,7 +4379,7 @@ sub compile_run {
 
 			#replace macro opcodes
 			$macro_opcode = $macro_entry->[4];
-			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
+			foreach $macro_argc (1..$self->{macro_argcs}->{$macro_name}) {
 			    $macro_opcode_replace = $macro_args[$macro_argc-1];
 			    $macro_opcode =~ s/\\$macro_argc/$macro_opcode_replace/g;
 			    #printf "replace macro opcode: %d \"%s\", \"%s\" => \"%s\"\n", $macro_argc, $macro_entry->[4], $macro_opcode_replace, $macro_opcode;
@@ -4387,7 +4387,7 @@ sub compile_run {
 
 			#replace macro args
 			$macro_arg = $macro_entry->[5];
-			foreach $macro_argc (1..$self->{macro_argcs}->{$maro_name}) {
+			foreach $macro_argc (1..$self->{macro_argcs}->{$macro_name}) {
 			    $macro_arg_replace = $macro_args[$macro_argc-1];
 			    $macro_arg =~ s/\\$macro_argc/$macro_arg_replace/g;
 			    #printf "replace macro arg: %d \"%s\", \"%s\" => \"%s\"\n", $macro_argc, $macro_entry->[5], $macro_arg_replace, $macro_arg;
