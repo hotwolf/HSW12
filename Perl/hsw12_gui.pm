@@ -1490,11 +1490,18 @@ sub create_terminal_window {
 								 -scrollbars => 'se',
 								 -wrap       => 'none');
 	    $self->{gui}->{terminal}->{text_text}->grid(-column => 0, -row => 0, -sticky => 'nsew');
-	    $self->{gui}->{terminal}->{text_text}->bind('<KeyPress>', [sub {my $keysym = $Tk::event->K;
-									    my $char   = $Tk::event->A;
-									    if ($keysym eq "Return")   {$char = "\n";}
-									    if ($keysym eq "KP_Enter") {$char = "\n";}
-									    if (defined  $self->{pod}) {$self->{pod}->send_string($char);}}]);
+	    $self->{gui}->{terminal}->{text_text}->bind(
+	        '<KeyPress>' => [
+	            sub {
+	                my ($widget, $keysym, $char) = @_;
+	                if ($keysym eq "Return")   {$char = "\n";}
+	                if ($keysym eq "KP_Enter") {$char = "\n";}
+	                if (defined  $self->{pod}) {$self->{pod}->send_string($char);}
+	            },
+	            Tk::Ev('K'), #keysym
+	            Tk::Ev('A'), #char
+	        ],
+	    );
 	    
 	    #input_frame
 	    $self->{gui}->{terminal}->{input_frame} = $self->{gui}->{terminal}->{toplevel}->Frame(-relief => 'ridge', -border => 2);
@@ -1962,7 +1969,10 @@ sub create_source_code_window {
 								    -scrollbars => 'se',
 								    -wrap       => 'none');
 	    $self->{gui}->{source_code}->{text_text}->grid(-column => 0, -row => 0, -sticky => 'nsew');
-	    $self->{gui}->{source_code}->{text_text}->bind('<Double-Button-1>', [\&source_edit_cmd, $self]);
+	    $self->{gui}->{source_code}->{text_text}->bind(
+	        '<Double-Button-1>',
+	        [\&source_edit_cmd, $self, Tk::Ev('x'), Tk::Ev('y')],
+	    );
 	    $self->{gui}->{source_code}->{text_info} = []; 
 
 	    #goto frame
@@ -2633,6 +2643,8 @@ sub source_code_search_cmd {
 sub source_edit_cmd {
     my $text_widget = shift @_;
     my $self        = shift @_;
+    my $event_x     = shift @_;
+    my $event_y     = shift @_;
     my $index;
     my $info;
     my $code_line;
@@ -2649,8 +2661,8 @@ sub source_edit_cmd {
 	# get text index #
 	##################
 	$index = $text_widget->index(sprintf("@%d,%d", 
-					     $Tk::event->x,
-					     $Tk::event->y));
+					     $event_x,
+					     $event_y));
 	if (defined $index) {
 	    $index =~ s/\..*$//g;
 	    if ($index =~ /^\d+$/) {
