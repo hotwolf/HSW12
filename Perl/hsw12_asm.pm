@@ -2573,7 +2573,7 @@ if ($^O =~ /MSWin/i) {
                               [$amod_idx1_ididx,        \&check_idx1_ididx,             "18 0A"],  #IDX1-[D,IDX]
                               [$amod_idx1_iidx2,        \&check_idx1_iidx2,             "18 0A"],  #IDX1-[IDX2]
                               [$amod_idx1_iext,         \&check_idx1_iext,              "18 0A"],  #IDX1-[EXT]
-                              [$amod_idx2_ext,          \&check_idx2_ext,               "18 0D"],  #IDX1-EXT
+                              [$amod_idx2_ext,          \&check_idx2_ext,               "18 0D"],  #IDX2-EXT
                               [$amod_idx2_idx,          \&check_idx2_idx,               "18 0A"],  #IDX2-IDX
                               [$amod_idx2_idx1,         \&check_idx2_idx1,              "18 0A"],  #IDX2-IDX1
                               [$amod_idx2_idx2,         \&check_idx2_idx2,              "18 0A"],  #IDX2-IDX2
@@ -2629,7 +2629,7 @@ if ($^O =~ /MSWin/i) {
                               [$amod_idx1_ididx,        \&check_idx1_ididx,             "18 02"],  #IDX1-[D,IDX]
                               [$amod_idx1_iidx2,        \&check_idx1_iidx2,             "18 02"],  #IDX1-[IDX2]
                               [$amod_idx1_iext,         \&check_idx1_iext,              "18 02"],  #IDX1-[EXT]
-                              [$amod_idx2_ext,          \&check_idx2_ext,               "18 05"],  #IDX1-EXT
+                              [$amod_idx2_ext,          \&check_idx2_ext,               "18 05"],  #IDX2-EXT
                               [$amod_idx2_idx,          \&check_idx2_idx,               "18 02"],  #IDX2-IDX
                               [$amod_idx2_idx1,         \&check_idx2_idx1,              "18 02"],  #IDX2-IDX1
                               [$amod_idx2_idx2,         \&check_idx2_idx2,              "18 02"],  #IDX2-IDX2
