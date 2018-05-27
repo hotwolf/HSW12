@@ -261,6 +261,10 @@ Dirk Heisswolf
 
  -use different stty args depending on OS
 
+=item V00.15 - May 11, 2018 
+
+ -detect presence of coreutils stty; fallback to BSD stty syntax otherwise
+
 =over 4
 
 initial release
@@ -300,7 +304,7 @@ use IO::Select;
 ###########
 # version #
 ###########
-*version = \"00.14";#"
+*version = \"00.15";#"
 
 ######################
 # parser expressions #
@@ -476,10 +480,12 @@ sub set_baud_rate {
   if (defined $device) {
     undef $!;
     #set stty args
-    if ($^O =~ /darwin/) {
-      $stty_call  = sprintf("stty -f %s ", $device);
+    if(index(`stty --version 2>&1`, 'stty (GNU coreutils)') != -1) {
+      # detected coreutils stty, use necessary syntax
+      $stty_call  = sprintf("stty -F %s ", $device);
     } else {
-      $stty_call  = sprintf("stty -F %s ", $device);      
+      # assume BSD stty syntax otherwise (e.g. macOS)
+      $stty_call  = sprintf("stty -f %s ", $device);
     }
     $stty_call .= "-parenb ";
     $stty_call .= "-parodd ";
