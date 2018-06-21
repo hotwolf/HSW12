@@ -1516,15 +1516,18 @@ sub create_terminal_window {
 	    $self->{gui}->{terminal}->{input_entry}->bind('<Key-Return>', [sub {$self->terminal_send_line_cmd()}]);
 	    $self->{gui}->{terminal}->{input_enter_button} = $self->{gui}->{terminal}->{input_frame}->Button(-text    => "ENTER",
 													     -command => [\&terminal_send_line_cmd, $self],
-													     -width   => 4);
+													     -padx => 0,
+														 );
 	    $self->{gui}->{terminal}->{input_enter_button}->grid(-column => 1, -row => 0, -sticky => 'nsew');
 	    $self->{gui}->{terminal}->{input_upload_button} = $self->{gui}->{terminal}->{input_frame}->Button(-text    => "UPLOAD",
 													      -command => [\&terminal_upload_code_cmd, $self],
-													      -width   => 4);
+													      -padx => 0,
+														  );
 	    $self->{gui}->{terminal}->{input_upload_button}->grid(-column => 2, -row => 0, -sticky => 'nsew');
 	    $self->{gui}->{terminal}->{input_clear_button} = $self->{gui}->{terminal}->{input_frame}->Button(-text    => "CLEAR",
 													     -command => [\&terminal_clear_cmd, $self],
-													     -width   => 4);
+													     -padx => 0,
+														 );
 	    $self->{gui}->{terminal}->{input_clear_button}->grid(-column => 3, -row => 0, -sticky => 'nsew');
 	    #macro_frame
 	    $self->{gui}->{terminal}->{macro_frame} = $self->{gui}->{terminal}->{toplevel}->Frame(-relief => 'ridge', -border => 2);
