@@ -166,9 +166,18 @@ r
    (add/enable commonly used ones, comment out others)
  - use foreach loop to generate 'Preferences' > 'Terminal' > 'Speed' menu
  
-=item V00.2? - Mar 23, 2018
+=item V00.23 - Jun 22, 2018
 
- - modernize menubar
+ - improvements/workarounds for experimental support
+   of macOS aqua (instead of XQuartz) using Tcl::pTk::TkHijack
+ 	- use Tk 8 menubar (for native menubar on aqua)
+	- hide main window on aqua (empty)
+	- remove "Quit" from File menu on aqua
+	- workaround: avoid '...' in menu names
+	- use Tk::Ev(…) instead of $Tk::event->…
+	- use fully qualified Tk::Exists rather than Exists
+	- use C<< -padx => 0 >> to shrink ENTER, UPLOAD, and CLEAR buttons
+	- bind macro right-click to button 2 on aqua
 
 =back
 
