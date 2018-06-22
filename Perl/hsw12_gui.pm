@@ -86,7 +86,7 @@ r
 =item V00.07 - Apr 1, 2003 
 
  -upload button is disabled when it is unusable
- -S0 field in S-Records sais "HSW12" (short string)
+ -S0 field in S-Records says "HSW12" (short string)
  -tracking release number in about window
  -added "Preferences" menu
  -double_clicking source code invokes editor
@@ -150,7 +150,7 @@ r
 
 =item V00.19 - Jan 19, 2010 
 
- -*.hsw12 sesion files now contain the compiled source code
+ -*.hsw12 session files now contain the compiled source code
  -recompile command now triggers an incremental compile
 
 =item V00.20 - Nov 20, 2012 
