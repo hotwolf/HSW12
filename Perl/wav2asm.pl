@@ -248,7 +248,7 @@ foreach $src_file (@src_files) {
     #printf STDERR "file_size:    %d (%dk)\n", $file_size, ($file_size/1024);
     #exit;
 
-    #truncate silence at the ent
+    #truncate silence at the end
     @data_buffer = reverse @data_buffer;
     @pad_buffer = ();
     while ($#data_buffer > 0) {
