@@ -3354,7 +3354,7 @@ sub precompile {
         $error = 0;
         if ($file_name =~ /$path_absolute/) {
 	   #printf "absolute path: %s\n", $file_name;
-           #asolute path
+           #absolute path
             $file = $file_name;
             if (-e $file) {
                 if (-r $file) {
