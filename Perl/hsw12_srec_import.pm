@@ -879,7 +879,7 @@ sub import_srec {
 				    undef,               #hex code
 				    undef,               #bytes
 				    undef,               #cycles
-				    ["invalid S-Recor"]];           #errors
+				    ["invalid S-Record"]];           #errors
 	    $error_count++;
 	    @srccode_sequence = ();
 	}
