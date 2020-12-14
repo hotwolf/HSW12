@@ -363,7 +363,10 @@ Dirk Heisswolf
      -Each S5 record now shows the number of S1/2/3 records after the initial S0-record.
       (Previously the count was reset after each S5 record)
  -enhanced fill byte option in S-record generation (now alinment to phrases > 1 byte supported)     
-  
+
+=item V00.58 - Dec 14, 2020
+ -fixed precompiler detection of "CPU" pseudo-opcode
+
 =cut
 
 #################
@@ -411,7 +414,7 @@ use File::Basename;
 ###########
 # version #
 ###########
-*version = \"00.57";#"
+*version = \"00.58";#"
 
 #############################
 # default S-record settings #
@@ -3487,7 +3490,7 @@ sub precompile {
                     if ($ifdef_stack->[$#$ifdef_stack]->[0]){
 
 			#Interpret pseudo opcode CPU
-			if ($cpcode eq $psop_cpu) {
+			if (uc($opcode) eq 'CPU') {
 			    $cpu = uc($arguments);
 			}
 
