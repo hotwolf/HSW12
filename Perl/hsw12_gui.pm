@@ -22,7 +22,7 @@ hsw12_gui - HSW12 Graphical User Interface
 
 =head1 REQUIRES
 
-perl5.005, hsw12_asm, hsw12_pod, Tk, Tk::ROText, Tk::Dialog, Data::Dumper, IO::File, Fcntl, File::Basename, FindBin, POSIX
+perl5.005, hsw12_asm, hsw12_pod, Tk800.000, Tk::ROText, Tk::Dialog, Data::Dumper, IO::File, Fcntl, File::Basename, FindBin, POSIX
 
 =head1 DESCRIPTION
 
@@ -166,6 +166,19 @@ r
    (add/enable commonly used ones, comment out others)
  - use foreach loop to generate 'Preferences' > 'Terminal' > 'Speed' menu
  
+=item V00.23 - Jun 22, 2018
+
+ - improvements/workarounds for experimental support
+   of macOS aqua (instead of XQuartz) using Tcl::pTk::TkHijack
+ 	- use Tk 8 menubar (for native menubar on aqua)
+	- hide main window on aqua (empty)
+	- remove "Quit" from File menu on aqua
+	- workaround: avoid '...' in menu names
+	- use Tk::Ev(…) instead of $Tk::event->…
+	- use fully qualified Tk::Exists rather than Exists
+	- use C<< -padx => 0 >> to shrink ENTER, UPLOAD, and CLEAR buttons
+	- bind macro right-click to button 2 on aqua
+
 =back
 
 =cut
@@ -189,7 +202,7 @@ package hsw12_gui;
 ###########
 # modules #
 ###########
-use Tk;
+use Tk 800.000;
 use Tk::ROText;
 use Tk::Dialog;
 use Tk::FBox;
@@ -397,6 +410,9 @@ sub create_main_window {
 	# create main window #
 	######################
 	$self->{gui}->{main} = MainWindow->new();
+	if ($self->{gui}->{main}->windowingsystem eq 'aqua') {
+		$self->{gui}->{main}->withdraw;
+	}
 	if ($self->{session}->{file_name} =~ /^\s*$/) {
 	    $self->{gui}->{main}->title("HSW12 - Main");
 	} else {
@@ -418,58 +434,62 @@ sub create_main_window {
 	########
 	# menu #
 	########
+	# more modern menubar:
+	# cf. Mastering Perl/Tk ch. 12
+	#   sect. 2.1 - "Menubars and Pulldown Menus"
+	$self->{gui}->{main}->configure(
+		-menu => $self->{gui}->{menu} = $self->{gui}->{main}->Menu);
 	#"File"
-	$self->{gui}->{menu}->{file}->{mbutton} = $self->{gui}->{main}->Menubutton(-text => "File",
-										   -borderwidth => 2,
+	$self->{gui}->{menu}->{file}->{cascade} = $self->{gui}->{menu}->cascade(-label => "File",
 										   -tearoff     => 'false');
 	#new session
 	$self->{gui}->{menu}->{file}->{new_session} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "New Session",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "New Session",
 							     -command => [\&main_window_new_session_cmd, $self]);
 	#restore session
 	$self->{gui}->{menu}->{file}->{restore_session} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Restore Session",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Restore Session",
 							     -command => [\&main_window_restore_session_cmd, $self]);
 	#save session
 	$self->{gui}->{menu}->{file}->{save_session} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Save Session",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Save Session",
 							     -command => [\&main_window_save_session_cmd, $self]);
 	#save session as...
 	$self->{gui}->{menu}->{file}->{save_session_as} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Save Session as...",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Save Session as...",
 							     -command => [\&main_window_save_session_as_cmd, $self]);
 	#separator
-	$self->{gui}->{menu}->{file}->{mbutton}->separator;
+	$self->{gui}->{menu}->{file}->{cascade}->separator;
 	#load source code
 	$self->{gui}->{menu}->{file}->{load_source_code} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Load Source Code",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Load Source Code",
 							     -command => [\&main_window_load_source_code_cmd, $self]);
 	#recompile source code
 	$self->{gui}->{menu}->{file}->{recompile_source_code} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Recompile Source Code",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Recompile Source Code",
 							     -command => [\&main_window_recompile_source_code_cmd, $self]);
 	#separator
-	$self->{gui}->{menu}->{file}->{mbutton}->separator;
+	$self->{gui}->{menu}->{file}->{cascade}->separator;
 
 	#save list file
 	$self->{gui}->{menu}->{file}->{save_list_file} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Save List File",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Save List File",
 							     -command => [\&main_window_save_list_file_cmd, $self]);
 	#save linear srecord
 	$self->{gui}->{menu}->{file}->{save_linear_srecord} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Save Linear S-Record",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Save Linear S-Record",
 							     -command => [\&main_window_save_linear_srecord_cmd, $self]);
 	#save paged srecord
 	$self->{gui}->{menu}->{file}->{save_paged_srecord} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Save Paged S-Record",
+	    $self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Save Paged S-Record",
 							     -command => [\&main_window_save_paged_srecord_cmd, $self]);
 
 	#separator
-	$self->{gui}->{menu}->{file}->{mbutton}->separator;
+	$self->{gui}->{menu}->{file}->{cascade}->separator;
 
 	#import
 	$self->{gui}->{menu}->{file}->{import_cascade} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->cascade(-label   => "Import...",
+	    $self->{gui}->{menu}->{file}->{cascade}->cascade(-label   => "Import...",
 							     -tearoff => 'false');
 	#import_linear_s12
 	$self->{gui}->{menu}->{file}->{import_linear_s12} = 
@@ -494,21 +514,21 @@ sub create_main_window {
 							            -command => [\&main_window_import_paged_s12x_srecord_cmd, $self]);
 
 	#separator
-	$self->{gui}->{menu}->{file}->{mbutton}->separator;
+	$self->{gui}->{menu}->{file}->{cascade}->separator;
 
 	#quit
-	$self->{gui}->{menu}->{file}->{quit} = 
-	    $self->{gui}->{menu}->{file}->{mbutton}->command(-label   => "Quit",
-							     -command => [\&main_window_quit_cmd, $self]);
-	$self->{gui}->{menu}->{file}->{mbutton}->pack(-side => "left", -padx => 2, -pady => 2 );
+	if ($self->{gui}->{main}->windowingsystem ne 'aqua') {
+		$self->{gui}->{menu}->{file}->{quit} = 
+			$self->{gui}->{menu}->{file}->{cascade}->command(-label   => "Quit",
+									-command => [\&main_window_quit_cmd, $self]);
+	}
 	
 	#"Preferences"
-	$self->{gui}->{menu}->{pref}->{mbutton} = $self->{gui}->{main}->Menubutton(-text => "Preferences",
-										   -borderwidth => 2,
+	$self->{gui}->{menu}->{pref}->{cascade} = $self->{gui}->{menu}->cascade(-label => "Preferences",
 										   -tearoff     => 'false');
 	#term
 	$self->{gui}->{menu}->{pref}->{term_cascade} = 
-	    $self->{gui}->{menu}->{pref}->{mbutton}->cascade(-label   => "Terminal",
+	    $self->{gui}->{menu}->{pref}->{cascade}->cascade(-label   => "Terminal",
 							     -tearoff => 'false');
 	#term_port
 	$self->{gui}->{menu}->{pref}->{term_port_cascade} = 
@@ -595,10 +615,10 @@ sub create_main_window {
 									       -selectcolor => $self->{session}->{colors}->{dark_red});
 	}
 	#separator
-	$self->{gui}->{menu}->{pref}->{mbutton}->separator;
+	$self->{gui}->{menu}->{pref}->{cascade}->separator;
 	#srec
 	$self->{gui}->{menu}->{pref}->{srec_cascade} = 
-	    $self->{gui}->{menu}->{pref}->{mbutton}->cascade(-label   => "S-Record",
+	    $self->{gui}->{menu}->{pref}->{cascade}->cascade(-label   => "S-Record",
 							     -tearoff => 'false');
 	#srec_format
 	$self->{gui}->{menu}->{pref}->{srec_format_cascade} = 
@@ -696,10 +716,10 @@ sub create_main_window {
 										 -offvalue    => 0,
 										 -selectcolor => $self->{session}->{colors}->{dark_red});
 	#separator
-	$self->{gui}->{menu}->{pref}->{mbutton}->separator;
+	$self->{gui}->{menu}->{pref}->{cascade}->separator;
 	#addr
 	$self->{gui}->{menu}->{pref}->{addr_cascade} = 
-	    $self->{gui}->{menu}->{pref}->{mbutton}->cascade(-label   => "Address Mode",
+	    $self->{gui}->{menu}->{pref}->{cascade}->cascade(-label   => "Address Mode",
 							     -tearoff => 'false');
 	#addr_checkbutton
 	$self->{gui}->{menu}->{pref}->{addr_checkbutton} = 
@@ -708,60 +728,55 @@ sub create_main_window {
 								      -onvalue     => 1,
 								      -offvalue    => 0,
 								      -selectcolor => $self->{session}->{colors}->{dark_red});
-	$self->{gui}->{menu}->{pref}->{mbutton}->pack(-side => "left", -padx => 2, -pady => 2 );
 
 	#"Windows"
-	$self->{gui}->{menu}->{windows}->{mbutton} = $self->{gui}->{main}->Menubutton(-text => "Windows",
-										      -borderwidth => 2,
+	$self->{gui}->{menu}->{windows}->{cascade} = $self->{gui}->{menu}->cascade(-label => "Windows",
 										      -tearoff     => 'false');
 	#terminal
 	$self->{gui}->{menu}->{windows}->{terminal} = 
-	    $self->{gui}->{menu}->{windows}->{mbutton}->command(-label    => "Terminal",
+	    $self->{gui}->{menu}->{windows}->{cascade}->command(-label    => "Terminal",
 								-command  => [\&main_window_show_terminal_window_cmd, $self]);
 	#source code
 	$self->{gui}->{menu}->{windows}->{source_code} = 
-	    $self->{gui}->{menu}->{windows}->{mbutton}->command(-label    => "Source Code",
+	    $self->{gui}->{menu}->{windows}->{cascade}->command(-label    => "Source Code",
 								-command  => [\&main_window_show_source_code_window_cmd, $self]);
 	#variables
 	$self->{gui}->{menu}->{windows}->{variables} = 
-	    $self->{gui}->{menu}->{windows}->{mbutton}->command(-label    => "Variables",
+	    $self->{gui}->{menu}->{windows}->{cascade}->command(-label    => "Variables",
 								-command  => [\&main_window_show_variables_window_cmd, $self]);
 	#registers
 	$self->{gui}->{menu}->{windows}->{registers} = 
-	    $self->{gui}->{menu}->{windows}->{mbutton}->command(-label    => "Registers",
+	    $self->{gui}->{menu}->{windows}->{cascade}->command(-label    => "Registers",
 								-command  => [\&main_window_show_registers_window_cmd, $self]);
 	#control
 	$self->{gui}->{menu}->{windows}->{control} = 
-	    $self->{gui}->{menu}->{windows}->{mbutton}->command(-label    => "Control",
+	    $self->{gui}->{menu}->{windows}->{cascade}->command(-label    => "Control",
 								-command  => [\&main_window_show_control_window_cmd, $self]);
 	#separator
-	$self->{gui}->{menu}->{windows}->{mbutton}->separator;
+	$self->{gui}->{menu}->{windows}->{cascade}->separator;
 	#all windows
 	$self->{gui}->{menu}->{windows}->{all} = 
-	    $self->{gui}->{menu}->{windows}->{mbutton}->command(-label    => "All Windows",
+	    $self->{gui}->{menu}->{windows}->{cascade}->command(-label    => "All Windows",
 								-command  => [\&main_window_show_all_windows_cmd, $self]);
 	#separator
-	$self->{gui}->{menu}->{windows}->{mbutton}->separator;
+	$self->{gui}->{menu}->{windows}->{cascade}->separator;
 	#connect
 	$self->{gui}->{menu}->{windows}->{connect} = 
-	    $self->{gui}->{menu}->{windows}->{mbutton}->checkbutton(-label       => "connect",
+	    $self->{gui}->{menu}->{windows}->{cascade}->checkbutton(-label       => "connect",
 								    #-onvalue     => 1,
 								    #-onvalue     => 0,
 								    -command     => [\&main_window_connect_cmd, $self],
 								    -indicatoron => 1,
 								    -selectcolor => $self->{session}->{colors}->{dark_red});
 
-	$self->{gui}->{menu}->{windows}->{mbutton}->pack( -side => "left", -padx => 2, -pady => 2 );
 	
 	#"Help"
-	$self->{gui}->{menu}->{help}->{mbutton} = $self->{gui}->{main}->Menubutton(-text => "Help",
-										   -borderwidth => 2,
+	$self->{gui}->{menu}->{help}->{cascade} = $self->{gui}->{menu}->cascade(-label => "Help",
 										   -tearoff     => 'false');
 	#about
 	$self->{gui}->{menu}->{help}->{about} = 
-	    $self->{gui}->{menu}->{help}->{mbutton}->command(-label   => "About",
+	    $self->{gui}->{menu}->{help}->{cascade}->command(-label   => "About",
 							     -command => [\&main_window_about_cmd, $self]);
-	$self->{gui}->{menu}->{help}->{mbutton}->pack( -side => "right", -padx => 2, -pady => 2 );
     }
 
     #update main window
@@ -1484,11 +1499,18 @@ sub create_terminal_window {
 								 -scrollbars => 'se',
 								 -wrap       => 'none');
 	    $self->{gui}->{terminal}->{text_text}->grid(-column => 0, -row => 0, -sticky => 'nsew');
-	    $self->{gui}->{terminal}->{text_text}->bind('<KeyPress>', [sub {my $keysym = $Tk::event->K;
-									    my $char   = $Tk::event->A;
-									    if ($keysym eq "Return")   {$char = "\n";}
-									    if ($keysym eq "KP_Enter") {$char = "\n";}
-									    if (defined  $self->{pod}) {$self->{pod}->send_string($char);}}]);
+	    $self->{gui}->{terminal}->{text_text}->bind(
+	        '<KeyPress>' => [
+	            sub {
+	                my ($widget, $keysym, $char) = @_;
+	                if ($keysym eq "Return")   {$char = "\n";}
+	                if ($keysym eq "KP_Enter") {$char = "\n";}
+	                if (defined  $self->{pod}) {$self->{pod}->send_string($char);}
+	            },
+	            Tk::Ev('K'), #keysym
+	            Tk::Ev('A'), #char
+	        ],
+	    );
 	    
 	    #input_frame
 	    $self->{gui}->{terminal}->{input_frame} = $self->{gui}->{terminal}->{toplevel}->Frame(-relief => 'ridge', -border => 2);
@@ -1503,15 +1525,18 @@ sub create_terminal_window {
 	    $self->{gui}->{terminal}->{input_entry}->bind('<Key-Return>', [sub {$self->terminal_send_line_cmd()}]);
 	    $self->{gui}->{terminal}->{input_enter_button} = $self->{gui}->{terminal}->{input_frame}->Button(-text    => "ENTER",
 													     -command => [\&terminal_send_line_cmd, $self],
-													     -width   => 4);
+													     -padx => 0,
+														 );
 	    $self->{gui}->{terminal}->{input_enter_button}->grid(-column => 1, -row => 0, -sticky => 'nsew');
 	    $self->{gui}->{terminal}->{input_upload_button} = $self->{gui}->{terminal}->{input_frame}->Button(-text    => "UPLOAD",
 													      -command => [\&terminal_upload_code_cmd, $self],
-													      -width   => 4);
+													      -padx => 0,
+														  );
 	    $self->{gui}->{terminal}->{input_upload_button}->grid(-column => 2, -row => 0, -sticky => 'nsew');
 	    $self->{gui}->{terminal}->{input_clear_button} = $self->{gui}->{terminal}->{input_frame}->Button(-text    => "CLEAR",
 													     -command => [\&terminal_clear_cmd, $self],
-													     -width   => 4);
+													     -padx => 0,
+														 );
 	    $self->{gui}->{terminal}->{input_clear_button}->grid(-column => 3, -row => 0, -sticky => 'nsew');
 	    #macro_frame
 	    $self->{gui}->{terminal}->{macro_frame} = $self->{gui}->{terminal}->{toplevel}->Frame(-relief => 'ridge', -border => 2);
@@ -1540,7 +1565,11 @@ sub create_terminal_window {
 		$self->{gui}->{terminal}->{$macro_button->[0]}->{button}->grid(-column => $macro_button->[1],
 									       -row    => $macro_button->[2],
 									       -sticky => 'nsew');
-		$self->{gui}->{terminal}->{$macro_button->[0]}->{button}->bind('<ButtonRelease-3>', [\&terminal_define_macro_cmd, 
+		$self->{gui}->{terminal}->{$macro_button->[0]}->{button}->bind(
+												    $self->{gui}->{main}->windowingsystem eq 'aqua'
+												      ? '<ButtonRelease-2>'
+												      : '<ButtonRelease-3>' ,
+												    [\&terminal_define_macro_cmd, 
 												     $self, 
 												     $macro_button->[0]]);
 	    }
@@ -1952,7 +1981,10 @@ sub create_source_code_window {
 								    -scrollbars => 'se',
 								    -wrap       => 'none');
 	    $self->{gui}->{source_code}->{text_text}->grid(-column => 0, -row => 0, -sticky => 'nsew');
-	    $self->{gui}->{source_code}->{text_text}->bind('<Double-Button-1>', [\&source_edit_cmd, $self]);
+	    $self->{gui}->{source_code}->{text_text}->bind(
+	        '<Double-Button-1>',
+	        [\&source_edit_cmd, $self, Tk::Ev('x'), Tk::Ev('y')],
+	    );
 	    $self->{gui}->{source_code}->{text_info} = []; 
 
 	    #goto frame
@@ -2623,6 +2655,8 @@ sub source_code_search_cmd {
 sub source_edit_cmd {
     my $text_widget = shift @_;
     my $self        = shift @_;
+    my $event_x     = shift @_;
+    my $event_y     = shift @_;
     my $index;
     my $info;
     my $code_line;
@@ -2639,8 +2673,8 @@ sub source_edit_cmd {
 	# get text index #
 	##################
 	$index = $text_widget->index(sprintf("@%d,%d", 
-					     $Tk::event->x,
-					     $Tk::event->y));
+					     $event_x,
+					     $event_y));
 	if (defined $index) {
 	    $index =~ s/\..*$//g;
 	    if ($index =~ /^\d+$/) {
@@ -4198,11 +4232,16 @@ sub new_session {
 
     #main window geometry
     $main_width    = int($screen_width * $gui_relative_width) - ($wm_w_border + $wm_e_border);
-    $main_height   = 30;
+    #$main_height  = 30; # do not manually add height of menubar (creates empty space otherwise)
+    $main_height   = 0;
     $main_x        = int(((1 - $gui_relative_width) * $screen_width) / 2);
     $main_y        = int(((1 - $gui_relative_height) * $screen_height) / 8);
     $main_geometry = sprintf("%dx%d+%d+%d", $main_width, $main_height, $main_x, $main_y);
     #print "main: $main_geometry\n";
+    
+    # For calculating the positions of remaining windows,
+    # the height of main window including menubar is ~30
+    $main_height += 30;
     
     #terminal geometry
     $terminal_width    = int(($main_width + $wm_w_border + $wm_e_border) / 3) - ($wm_w_border + $wm_e_border);
